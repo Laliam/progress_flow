@@ -38,15 +38,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _usernameController.text = profile.username ?? '';
     _sloganController.text = profile.slogan ?? '';
 
-    // Sync avatar JSON options from DB into the controller
+    // Sync avatar JSON options from DB into the controller (deferred to after build)
     if (profile.avatarJsonOptions != null) {
-      final controller = context.read<AvatarMakerController>();
-      if (controller is PersistentAvatarMakerController) {
-        PersistentAvatarMakerController.setJsonOptions(
-          profile.avatarJsonOptions!,
-          controller: controller,
-        );
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final controller = context.read<AvatarMakerController>();
+        if (controller is PersistentAvatarMakerController) {
+          PersistentAvatarMakerController.setJsonOptions(
+            profile.avatarJsonOptions!,
+            controller: controller,
+          );
+        }
+      });
     }
   }
 
@@ -160,11 +163,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
 
               // ── Fluttermoji customizer ───────────────────────────────────
-              AnimatedSwitcher(
+              AnimatedSize(
                 duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
                 child: _showCustomizer
                     ? Padding(
-                        key: const ValueKey('customizer'),
                         padding: const EdgeInsets.only(top: 16),
                         child: AvatarMakerCustomizer(
                           scaffoldHeight:
@@ -195,7 +198,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ),
                       )
-                    : const SizedBox.shrink(key: ValueKey('no-customizer')),
+                    : const SizedBox.shrink(),
               ),
 
               const SizedBox(height: 24),
