@@ -1,17 +1,14 @@
+import 'package:avatar_maker/fluttermoji.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth/application/auth_provider.dart';
 import '../../../app_version.dart';
 import '../application/profile_providers.dart';
 import '../../../services/notification_service.dart';
-
-const _kAvatarEmojis = [
-  '🦊', '🐉', '🐨', '🐸', '🦁', '🐼', '🐬', '🦋', '🐙', '🌟',
-  '🐯', '🦄', '🐺', '🦅', '🐻', '🦊', '🦁', '🐧', '🐳', '🦖',
-];
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final bool isSetup;
@@ -24,9 +21,9 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _usernameController = TextEditingController();
   final _sloganController = TextEditingController();
-  String _selectedEmoji = '🦊';
   bool _isSaving = false;
   bool _loaded = false;
+  bool _showCustomizer = false;
 
   @override
   void dispose() {
@@ -40,7 +37,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _loaded = true;
     _usernameController.text = profile.username ?? '';
     _sloganController.text = profile.slogan ?? '';
-    setState(() => _selectedEmoji = profile.avatarEmoji ?? '🦊');
+
+    // Sync avatar_maker options from DB to local SharedPreferences
+    if (profile.avatarJsonOptions != null) {
+      SharedPreferences.getInstance().then((pref) async {
+        await pref.setString(
+            'fluttermojiSelectedOptions', profile.avatarJsonOptions!);
+        // Let the Fluttermoji controller reload on next build
+        try {
+          FluttermojiFunctions(); // ensure defaults loaded
+        } catch (_) {}
+      });
+    }
   }
 
   Future<void> _save() async {
@@ -48,12 +56,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (userId == null) return;
     setState(() => _isSaving = true);
     try {
+      // Read current avatar options from SharedPreferences (autosaved by FluttermojiCustomizer)
+      String? avatarJsonOptions;
+      try {
+        final pref = await SharedPreferences.getInstance();
+        avatarJsonOptions = pref.getString('fluttermojiSelectedOptions');
+      } catch (_) {}
+
       await ref.read(profileRepositoryProvider).updateProfile(
-        userId: userId,
-        username: _usernameController.text.trim(),
-        slogan: _sloganController.text.trim(),
-        avatarEmoji: _selectedEmoji,
-      );
+            userId: userId,
+            username: _usernameController.text.trim(),
+            slogan: _sloganController.text.trim(),
+            avatarJsonOptions: avatarJsonOptions,
+          );
       ref.invalidate(currentProfileProvider);
       HapticFeedback.heavyImpact();
       if (mounted) {
@@ -108,39 +123,89 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Avatar section ──────────────────────────────────────────
               Center(
-                child: GestureDetector(
-                  onTap: () => _showEmojiPicker(context),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 100,
-                        height: 100,
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _showCustomizer = !_showCustomizer),
+                      child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
                           border: Border.all(
                             color: theme.colorScheme.primary.withValues(alpha: 0.4),
                             width: 2,
                           ),
                         ),
-                        child: Center(
-                          child: Text(_selectedEmoji, style: const TextStyle(fontSize: 52)),
+                        child: ClipOval(
+                          child: SizedBox(
+                            width: 100,
+                            height: 100,
+                            child: FluttermojiCircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.transparent,
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap to change avatar',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _showCustomizer ? 'Tap to hide editor' : 'Tap to customize avatar',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 28),
-              Text('Nickname', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+
+              // ── Fluttermoji customizer ───────────────────────────────────
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: _showCustomizer
+                    ? Padding(
+                        key: const ValueKey('customizer'),
+                        padding: const EdgeInsets.only(top: 16),
+                        child: FluttermojiCustomizer(
+                          scaffoldHeight:
+                              MediaQuery.of(context).size.height * 0.38,
+                          autosave: true,
+                          theme: FluttermojiThemeData(
+                            primaryBgColor: const Color(0xFF1C1F2E),
+                            secondaryBgColor: const Color(0xFF12141F),
+                            iconColor: theme.colorScheme.primary,
+                            selectedIconColor: theme.colorScheme.primary,
+                            unselectedIconColor: Colors.white54,
+                            labelTextStyle: theme.textTheme.labelMedium!
+                                .copyWith(color: Colors.white70),
+                            selectedTileDecoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: theme.colorScheme.primary, width: 2),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.15),
+                            ),
+                            boxDecoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: const Color(0xFF1C1F2E),
+                            ),
+                            scrollPhysics: const BouncingScrollPhysics(),
+                            tilePadding: const EdgeInsets.all(6),
+                            tileMargin: const EdgeInsets.all(4),
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(key: ValueKey('no-customizer')),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Nickname ────────────────────────────────────────────────
+              Text('Nickname',
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _usernameController,
@@ -150,8 +215,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   prefixIcon: Icon(Icons.person_outline_rounded),
                 ),
               ),
+
               const SizedBox(height: 20),
-              Text('Slogan', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+
+              // ── Slogan ─────────────────────────────────────────────────
+              Text('Slogan',
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _sloganController,
@@ -165,7 +235,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 32),
+
+              // ── Save ───────────────────────────────────────────────────
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -177,11 +250,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           : 'Save Profile'),
                 ),
               ),
+
               const SizedBox(height: 28),
-              Text('Daily Reminder', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+
+              // ── Notifications ──────────────────────────────────────────
+              Text('Daily Reminder',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              _NotificationSettings(buddyEmoji: _selectedEmoji),
+              const _NotificationSettings(),
+
               const SizedBox(height: 32),
+
               Text(
                 AppVersion.versionString,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -194,65 +274,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
     );
   }
-
-  void _showEmojiPicker(BuildContext context) {
-    final theme = Theme.of(context);
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Choose your buddy', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: _kAvatarEmojis.map((emoji) {
-                final selected = emoji == _selectedEmoji;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedEmoji = emoji);
-                    Navigator.of(ctx).pop();
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: selected
-                          ? theme.colorScheme.primary.withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.05),
-                      border: Border.all(
-                        color: selected
-                            ? theme.colorScheme.primary
-                            : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(child: Text(emoji, style: const TextStyle(fontSize: 32))),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _NotificationSettings extends ConsumerStatefulWidget {
-  final String buddyEmoji;
-  const _NotificationSettings({required this.buddyEmoji});
+  const _NotificationSettings();
   @override
-  ConsumerState<_NotificationSettings> createState() => _NotificationSettingsState();
+  ConsumerState<_NotificationSettings> createState() =>
+      _NotificationSettingsState();
 }
 
 class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
@@ -269,13 +297,20 @@ class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
   Future<void> _load() async {
     final enabled = await _notifService.isEnabled();
     final time = await _notifService.getReminderTime();
-    if (mounted) setState(() { _enabled = enabled; _time = time; });
+    if (mounted) {
+      setState(() {
+        _enabled = enabled;
+        _time = time;
+      });
+    }
   }
 
   Future<void> _toggleEnabled(bool value) async {
     setState(() => _enabled = value);
     await _notifService.scheduleDailyReminder(
-      enabled: value, time: _time, buddyEmoji: widget.buddyEmoji,
+      enabled: value,
+      time: _time,
+      buddyEmoji: '⚡',
     );
   }
 
@@ -285,7 +320,9 @@ class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
       setState(() => _time = picked);
       if (_enabled) {
         await _notifService.scheduleDailyReminder(
-          enabled: true, time: _time, buddyEmoji: widget.buddyEmoji,
+          enabled: true,
+          time: _time,
+          buddyEmoji: '⚡',
         );
       }
     }
@@ -304,10 +341,12 @@ class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
         children: [
           SwitchListTile(
             title: const Text('Daily reminder'),
-            subtitle: Text(_enabled ? 'Enabled at ${_time.format(context)}' : 'Tap to enable'),
+            subtitle: Text(_enabled
+                ? 'Enabled at ${_time.format(context)}'
+                : 'Tap to enable'),
             value: _enabled,
             onChanged: _toggleEnabled,
-            secondary: Text(widget.buddyEmoji, style: const TextStyle(fontSize: 24)),
+            secondary: const Text('⚡', style: TextStyle(fontSize: 24)),
           ),
           if (_enabled) ...[
             const Divider(height: 1),

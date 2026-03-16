@@ -10,6 +10,7 @@ abstract interface class ProfileRepository {
     required String username,
     String? slogan,
     String? avatarEmoji,
+    String? avatarJsonOptions,
   });
 }
 
@@ -32,6 +33,7 @@ class SupabaseProfileRepository implements ProfileRepository {
       avatarUrl: row['avatar_url'] as String?,
       slogan: row['slogan'] as String?,
       avatarEmoji: row['avatar_emoji'] as String? ?? '🦊',
+      avatarJsonOptions: row['avatar_json_options'] as String?,
     );
   }
 
@@ -41,14 +43,19 @@ class SupabaseProfileRepository implements ProfileRepository {
     required String username,
     String? slogan,
     String? avatarEmoji,
+    String? avatarJsonOptions,
   }) async {
-    await _client.from('profiles').upsert({
+    final payload = <String, dynamic>{
       'id': userId,
       'username': username,
       'slogan': slogan ?? '',
       'avatar_emoji': avatarEmoji ?? '🦊',
       'updated_at': DateTime.now().toIso8601String(),
-    });
+    };
+    if (avatarJsonOptions != null) {
+      payload['avatar_json_options'] = avatarJsonOptions;
+    }
+    await _client.from('profiles').upsert(payload);
   }
 }
 

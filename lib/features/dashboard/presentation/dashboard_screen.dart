@@ -1,3 +1,4 @@
+import 'package:avatar_maker/fluttermoji.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +7,6 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../auth/application/auth_service.dart';
-import '../../profile/application/profile_providers.dart';
 import '../../tasks/application/task_service.dart';
 import '../../tasks/domain/task.dart';
 import '../../tasks/application/task_logic.dart';
@@ -59,9 +59,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final tasksAsync = ref.watch(tasksForCurrentUserProvider);
-    final profileAsync = ref.watch(currentProfileProvider);
-    final avatarEmoji =
-        profileAsync.valueOrNull?.avatarEmoji ?? '🦊';
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -71,7 +68,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           IconButton(
             tooltip: 'Profile',
             onPressed: () => context.push('/profile'),
-            icon: Text(avatarEmoji, style: const TextStyle(fontSize: 22)),
+            icon: ClipOval(
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: FluttermojiCircleAvatar(
+                  radius: 18,
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                ),
+              ),
+            ),
           ),
           IconButton(
             tooltip: 'Sign out',
