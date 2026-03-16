@@ -15,7 +15,7 @@ abstract interface class TaskRepository {
   Future<String> createTask({
     required String creatorId,
     required String title,
-    required GoalType goalType,
+    String? unit,
     required double totalGoalValue,
     required double currentValue,
     required DateTime deadline,
@@ -27,7 +27,7 @@ abstract interface class TaskRepository {
   Future<void> updateTask({
     required String taskId,
     required String title,
-    required GoalType goalType,
+    String? unit,
     required double totalGoalValue,
     required double currentValue,
     required DateTime deadline,

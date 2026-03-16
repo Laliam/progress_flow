@@ -61,7 +61,7 @@ class SupabaseTaskRepository implements TaskRepository {
   Future<String> createTask({
     required String creatorId,
     required String title,
-    required GoalType goalType,
+    String? unit,
     required double totalGoalValue,
     required double currentValue,
     required DateTime deadline,
@@ -74,7 +74,7 @@ class SupabaseTaskRepository implements TaskRepository {
         .insert({
           'creator_id': creatorId,
           'title': title,
-          'goal_type': TaskDto.goalTypeToDb(goalType),
+          'unit': unit,
           'total_goal_value': totalGoalValue,
           'current_value': currentValue,
           'deadline': deadline.toIso8601String(),
@@ -92,7 +92,7 @@ class SupabaseTaskRepository implements TaskRepository {
   Future<void> updateTask({
     required String taskId,
     required String title,
-    required GoalType goalType,
+    String? unit,
     required double totalGoalValue,
     required double currentValue,
     required DateTime deadline,
@@ -104,7 +104,7 @@ class SupabaseTaskRepository implements TaskRepository {
         .from('tasks')
         .update({
           'title': title,
-          'goal_type': TaskDto.goalTypeToDb(goalType),
+          'unit': unit,
           'total_goal_value': totalGoalValue,
           'current_value': currentValue,
           'deadline': deadline.toIso8601String(),

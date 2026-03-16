@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/progress_service.dart';
 import '../../application/task_providers.dart';
 import '../../domain/task.dart';
+import '../../../shared/widgets/buddy_widget.dart';
+import '../../../shared/widgets/progress_celebration.dart';
 
 class ProgressQuickActions extends ConsumerStatefulWidget {
   final Task task;
@@ -42,11 +44,10 @@ class _ProgressQuickActionsState extends ConsumerState<ProgressQuickActions> {
 
       HapticFeedback.mediumImpact();
       if (mounted) {
-        _valueController.clear();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Progress logged')));
-      }
+          _valueController.clear();
+          final buddy = kBuddies[DateTime.now().millisecond % kBuddies.length];
+          showProgressCelebration(context, buddy);
+        }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -63,17 +64,16 @@ class _ProgressQuickActionsState extends ConsumerState<ProgressQuickActions> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isCompleted = widget.task.isCompleted;
-    final isPercent = widget.task.goalType == GoalType.percent;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        color: Colors.white.withValues(alpha: 0.03),
+        color: const Color(0xFF1A1D2E),
         border: Border.all(
           color: isCompleted
               ? theme.colorScheme.secondary.withValues(alpha: 0.35)
-              : Colors.white.withValues(alpha: 0.08),
+              : const Color(0xFF2F3242),
         ),
       ),
       child: isCompleted
@@ -112,7 +112,7 @@ class _ProgressQuickActionsState extends ConsumerState<ProgressQuickActions> {
                           decimal: true,
                         ),
                         decoration: InputDecoration(
-                          hintText: isPercent ? 'Add % (e.g. 10)' : 'Add amount (e.g. 25)',
+                          hintText: widget.task.unit != null ? 'Add ${widget.task.unit} (e.g. 5)' : 'Add amount (e.g. 25)',
                           isDense: true,
                         ),
                       ),

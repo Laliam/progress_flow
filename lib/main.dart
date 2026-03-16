@@ -6,11 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
 import 'router.dart';
+import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  await NotificationService().init();
 
   // Lock orientation to portrait for a focused progress-tracking experience.
   await SystemChrome.setPreferredOrientations([

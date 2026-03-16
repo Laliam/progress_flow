@@ -64,12 +64,12 @@ class LeaderboardScreen extends ConsumerWidget {
                       ),
                       tileColor: isTop3
                           ? medalColor!.withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.03),
+                          : const Color(0xFF1A1D2B),
                       leading: CircleAvatar(
                         radius: isTop3 ? 24 : 20,
                         backgroundColor: isTop3
                             ? medalColor
-                            : Colors.white.withValues(alpha: 0.08),
+                            : const Color(0xFF2A2D40),
                         child: isTop3
                             ? const Icon(Icons.emoji_events, color: Colors.white)
                             : Text(
@@ -92,7 +92,7 @@ class LeaderboardScreen extends ConsumerWidget {
                           barRadius: const Radius.circular(999),
                           percent: percent.clamp(0, 1),
                           backgroundColor:
-                              Colors.white.withValues(alpha: 0.08),
+                              const Color(0xFF2A2D40),
                           progressColor: isTop3
                               ? medalColor!
                               : Theme.of(context).colorScheme.primary,
@@ -158,8 +158,8 @@ class _ParticipantBarChart extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        color: Colors.white.withValues(alpha: 0.04),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: const Color(0xFF1C1F2E),
+        border: Border.all(color: const Color(0xFF2A2D40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +170,7 @@ class _ParticipantBarChart extends StatelessWidget {
               'Completion by participant',
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.85),
+                color: const Color(0xFFD8DBE8),
               ),
             ),
           ),
@@ -199,7 +199,7 @@ class _ParticipantBarChart extends StatelessWidget {
                         return Text(
                           '${v.round()}%',
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.35),
+                            color: const Color(0xFF6B7080),
                             fontSize: 10,
                           ),
                         );

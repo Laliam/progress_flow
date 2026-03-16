@@ -21,9 +21,7 @@ class ProgressService {
   /// Validation rules:
   /// - [delta] must be non-zero.
   /// - [task] must not already be completed.
-  /// - For [GoalType.percent] goals the resulting value must stay within
-  ///   [0, 100].
-  /// - For [GoalType.numerical] goals the resulting value must not go below 0.
+  /// - The resulting value must not go below 0.
   Future<void> logProgress({
     required Task task,
     required String userId,
@@ -39,18 +37,10 @@ class ProgressService {
 
     final newValue = task.currentValue + delta;
 
-    if (task.goalType == GoalType.percent) {
-      if (newValue < 0 || newValue > 100) {
-        throw ArgumentError(
-          'Progress for a percent goal must stay between 0 and 100.',
-        );
-      }
-    } else {
-      if (newValue < 0) {
-        throw ArgumentError(
-          'Progress cannot reduce a numerical goal below zero.',
-        );
-      }
+    if (newValue < 0) {
+      throw ArgumentError(
+        'Progress cannot reduce a goal below zero.',
+      );
     }
 
     await _repository.logProgress(

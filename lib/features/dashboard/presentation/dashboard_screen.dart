@@ -14,11 +14,49 @@ import '../../tasks/application/task_providers.dart';
 part 'widgets/quick_look_card.dart';
 part 'widgets/empty_quick_look_card.dart';
 
-class DashboardScreen extends ConsumerWidget {
+enum GoalSortBy { deadline, name, priority, completion }
+
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  GoalSortBy _sortBy = GoalSortBy.deadline;
+  bool _sortAsc = true;
+  bool _showCompleted = true;
+
+  List<Task> _sortTasks(List<Task> tasks) {
+    var list = _showCompleted ? tasks : tasks.where((t) => !t.isCompleted).toList();
+    list = List.of(list);
+    list.sort((a, b) {
+      int cmp;
+      switch (_sortBy) {
+        case GoalSortBy.deadline:
+          final aD = a.deadline ?? DateTime(9999);
+          final bD = b.deadline ?? DateTime(9999);
+          cmp = aD.compareTo(bD);
+        case GoalSortBy.name:
+          cmp = a.title.compareTo(b.title);
+        case GoalSortBy.priority:
+          int ps(Task t) => switch (t.priority) {
+            TaskPriority.high => 0,
+            TaskPriority.medium => 1,
+            TaskPriority.low => 2,
+          };
+          cmp = ps(a).compareTo(ps(b));
+        case GoalSortBy.completion:
+          cmp = a.completionPercent.compareTo(b.completionPercent);
+      }
+      return _sortAsc ? cmp : -cmp;
+    });
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tasksAsync = ref.watch(tasksForCurrentUserProvider);
     final theme = Theme.of(context);
 
@@ -26,6 +64,11 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('ProgressFlow'),
         actions: [
+          IconButton(
+            tooltip: 'Profile',
+            onPressed: () => context.push('/profile'),
+            icon: const Icon(Icons.person_outline_rounded),
+          ),
           IconButton(
             tooltip: 'Sign out',
             onPressed: () async {
@@ -141,6 +184,55 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              // ── Sort/filter row ──────────────────────────────────────
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    FilterChip(
+                      label: const Text('Show completed'),
+                      selected: _showCompleted,
+                      onSelected: (v) => setState(() => _showCompleted = v),
+                    ),
+                    const SizedBox(width: 8),
+                    ...GoalSortBy.values.map((s) {
+                      final label = switch (s) {
+                        GoalSortBy.deadline => 'Deadline',
+                        GoalSortBy.name => 'Name',
+                        GoalSortBy.priority => 'Priority',
+                        GoalSortBy.completion => '% Done',
+                      };
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(label),
+                              if (_sortBy == s) ...[
+                                const SizedBox(width: 4),
+                                Icon(
+                                  _sortAsc ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                  size: 14,
+                                ),
+                              ],
+                            ],
+                          ),
+                          selected: _sortBy == s,
+                          onSelected: (_) => setState(() {
+                            if (_sortBy == s) {
+                              _sortAsc = !_sortAsc;
+                            } else {
+                              _sortBy = s;
+                              _sortAsc = true;
+                            }
+                          }),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
               const SizedBox(height: 4),
               Expanded(
                 child: tasksAsync.when(
@@ -153,11 +245,20 @@ class DashboardScreen extends ConsumerWidget {
                         },
                       );
                     }
+                    final sorted = _sortTasks(tasks);
+                    if (sorted.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'All goals completed! 🎉',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      );
+                    }
                     return ListView.separated(
-                      itemCount: tasks.length,
+                      itemCount: sorted.length,
                       separatorBuilder: (i, j) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
-                        final task = tasks[index];
+                        final task = sorted[index];
                         final schedule = evaluateSchedule(
                           task: task,
                           startDate: task.deadline?.subtract(
@@ -174,9 +275,9 @@ class DashboardScreen extends ConsumerWidget {
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(22),
-                              color: Colors.white.withValues(alpha: 0.04),
+                              color: const Color(0xFF1C1F2E),
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.06),
+                                color: const Color(0xFF2A2D40),
                               ),
                             ),
                             child: Row(
@@ -304,8 +405,8 @@ class _ShimmerQuickLookCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.white.withValues(alpha: 0.1),
-      highlightColor: Colors.white.withValues(alpha: 0.2),
+      baseColor: const Color(0xFF22253A),
+      highlightColor: const Color(0xFF2E3248),
       child: Container(
         width: 260,
         padding: const EdgeInsets.all(16),
@@ -315,11 +416,11 @@ class _ShimmerQuickLookCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withValues(alpha: 0.12),
-              Colors.white.withValues(alpha: 0.02),
+              const Color(0xFF353848),
+              const Color(0xFF181B2C),
             ],
           ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          border: Border.all(color: const Color(0xFF3C4055)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +435,7 @@ class _ShimmerQuickLookCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: const Color(0xFF22253A),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -386,14 +487,14 @@ class _ShimmerAllGoalsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.white.withValues(alpha: 0.1),
-      highlightColor: Colors.white.withValues(alpha: 0.2),
+      baseColor: const Color(0xFF22253A),
+      highlightColor: const Color(0xFF2E3248),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          color: Colors.white.withValues(alpha: 0.04),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          color: const Color(0xFF1C1F2E),
+          border: Border.all(color: const Color(0xFF2A2D3E)),
         ),
         child: Row(
           children: [
@@ -421,7 +522,7 @@ class _ShimmerAllGoalsCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
-                color: Colors.white.withValues(alpha: 0.1),
+                color: const Color(0xFF22253A),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -475,7 +576,7 @@ class _EmptyAllGoalsWidget extends StatelessWidget {
           Text(
             'Set your first goal and watch your progress soar. Every journey starts with a single step!',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: const Color(0xFFB8BBCC),
             ),
             textAlign: TextAlign.center,
           ),
@@ -546,11 +647,11 @@ class _JoinChallengeCardState extends ConsumerState<_JoinChallengeCard> {
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        color: Colors.white.withValues(alpha: 0.04),
+        color: const Color(0xFF1C1F2E),
         border: Border.all(
           color: _expanded
               ? theme.colorScheme.primary.withValues(alpha: 0.4)
-              : Colors.white.withValues(alpha: 0.08),
+              : const Color(0xFF2F3242),
         ),
       ),
       child: Material(
@@ -603,7 +704,7 @@ class _JoinChallengeCardState extends ConsumerState<_JoinChallengeCard> {
               Text(
                 'Enter an invite code to race with friends',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: const Color(0xFF8B8FA8),
                 ),
               ),
             ],
@@ -611,7 +712,7 @@ class _JoinChallengeCardState extends ConsumerState<_JoinChallengeCard> {
         ),
         Icon(
           Icons.chevron_right_rounded,
-          color: Colors.white.withValues(alpha: 0.4),
+          color: const Color(0xFF6B7080),
         ),
       ],
     );
@@ -646,7 +747,7 @@ class _JoinChallengeCardState extends ConsumerState<_JoinChallengeCard> {
               child: Icon(
                 Icons.close_rounded,
                 size: 18,
-                color: Colors.white.withValues(alpha: 0.4),
+                color: const Color(0xFF6B7080),
               ),
             ),
           ],

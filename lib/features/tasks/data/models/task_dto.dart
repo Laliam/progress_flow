@@ -4,7 +4,7 @@ class TaskDto {
   final String id;
   final String creatorId;
   final String title;
-  final String goalType;
+  final String? unit;
   final double totalGoalValue;
   final double currentValue;
   final DateTime? deadline;
@@ -16,7 +16,7 @@ class TaskDto {
     required this.id,
     required this.creatorId,
     required this.title,
-    required this.goalType,
+    this.unit,
     required this.totalGoalValue,
     required this.currentValue,
     required this.deadline,
@@ -30,7 +30,7 @@ class TaskDto {
       id: map['id'] as String,
       creatorId: map['creator_id'] as String,
       title: map['title'] as String,
-      goalType: map['goal_type'] as String? ?? 'numerical',
+      unit: map['unit'] as String?,
       totalGoalValue: (map['total_goal_value'] as num).toDouble(),
       currentValue: (map['current_value'] as num).toDouble(),
       deadline: _parseDateTime(map['deadline']),
@@ -45,7 +45,7 @@ class TaskDto {
       id: id,
       creatorId: creatorId,
       title: title,
-      goalType: goalType == 'percent' ? GoalType.percent : GoalType.numerical,
+      unit: unit,
       totalGoalValue: totalGoalValue,
       currentValue: currentValue,
       deadline: deadline,
@@ -58,10 +58,6 @@ class TaskDto {
       isGroupTask: isGroupTask,
       isPublic: isPublic,
     );
-  }
-
-  static String goalTypeToDb(GoalType goalType) {
-    return goalType == GoalType.numerical ? 'numerical' : 'percent';
   }
 
   static String priorityToDb(TaskPriority priority) {

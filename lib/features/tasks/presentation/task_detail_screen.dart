@@ -86,10 +86,10 @@ class _TaskDetailBody extends ConsumerWidget {
       totalGoal: task.totalGoalValue,
       currentProgress: task.currentValue,
       deadline: task.deadline,
+      unit: task.unit,
     );
 
-    final isPercent = task.goalType == GoalType.percent;
-    final unit = isPercent ? '%' : '';
+    final unit = task.unit != null && task.unit!.isNotEmpty ? ' ${task.unit}' : '';
     final remaining =
         (task.totalGoalValue - task.currentValue).clamp(0.0, double.infinity);
     final deadlineStr = task.deadline == null
@@ -161,9 +161,9 @@ class _TaskDetailBody extends ConsumerWidget {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
-                    color: Colors.white.withValues(alpha: 0.04),
+                    color: const Color(0xFF1C1F2E),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.10),
+                      color: const Color(0xFF343750),
                     ),
                   ),
                   child: Column(
@@ -173,7 +173,7 @@ class _TaskDetailBody extends ConsumerWidget {
                         lineWidth: 12,
                         percent: task.completionPercent,
                         backgroundColor:
-                            Colors.white.withValues(alpha: 0.08),
+                            const Color(0xFF2F3242),
                         progressColor: progressColor,
                         circularStrokeCap: CircularStrokeCap.round,
                         center: Column(
@@ -190,7 +190,7 @@ class _TaskDetailBody extends ConsumerWidget {
                             Text(
                               'complete',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.45),
+                                color: const Color(0xFF8B8FA8),
                               ),
                             ),
                           ],
@@ -202,7 +202,7 @@ class _TaskDetailBody extends ConsumerWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: schedule.status == ScheduleStatus.behind
                               ? theme.colorScheme.tertiary
-                              : Colors.white.withValues(alpha: 0.75),
+                              : const Color(0xFFBEC1D2),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -211,7 +211,7 @@ class _TaskDetailBody extends ConsumerWidget {
                         Text(
                           dailyTarget.label,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.45),
+                            color: const Color(0xFF8B8FA8),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -323,11 +323,11 @@ class _StatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           color: highlightColor != null
               ? highlightColor!.withValues(alpha: 0.08)
-              : Colors.white.withValues(alpha: 0.04),
+              : const Color(0xFF1C1F2E),
           border: Border.all(
             color: highlightColor != null
                 ? highlightColor!.withValues(alpha: 0.25)
-                : Colors.white.withValues(alpha: 0.07),
+                : const Color(0xFF2A2D40),
           ),
         ),
         child: Column(
@@ -336,7 +336,7 @@ class _StatCard extends StatelessWidget {
             Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
-                color: Colors.white.withValues(alpha: 0.45),
+                color: const Color(0xFF8B8FA8),
               ),
             ),
             const SizedBox(height: 4),
@@ -416,9 +416,9 @@ class _ProgressChart extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        color: Colors.white.withValues(alpha: 0.04),
+        color: const Color(0xFF1C1F2E),
         border:
-            Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            Border.all(color: const Color(0xFF2F3242)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,7 +432,7 @@ class _ProgressChart extends ConsumerWidget {
                 'Progress over time',
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: const Color(0xFFD8DBE8),
                 ),
               ),
             ],
@@ -522,7 +522,7 @@ class _ProgressChart extends ConsumerWidget {
                                   ? '${(v / 1000).toStringAsFixed(1)}k'
                                   : v.toStringAsFixed(0),
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.35),
+                                color: const Color(0xFF6B7080),
                                 fontSize: 10,
                               ),
                             );
@@ -541,7 +541,7 @@ class _ProgressChart extends ConsumerWidget {
                             return Text(
                               DateFormat.MMMd().format(date),
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.35),
+                                color: const Color(0xFF6B7080),
                                 fontSize: 10,
                               ),
                             );
@@ -637,7 +637,7 @@ class _LegendDot extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Colors.white.withValues(alpha: 0.45),
+                color: const Color(0xFF8B8FA8),
               ),
         ),
       ],

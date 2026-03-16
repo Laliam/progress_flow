@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:intl/intl.dart';
 
 import '../domain/task.dart';
 
@@ -18,6 +17,7 @@ DailyTargetResult calculateDailyTarget({
   required double totalGoal,
   required double currentProgress,
   required DateTime? deadline,
+  String? unit,
 }) {
   if (deadline == null) {
     return const DailyTargetResult(
@@ -34,10 +34,11 @@ DailyTargetResult calculateDailyTarget({
   final remaining = max(0, totalGoal - currentProgress);
   final perDay = remaining / daysRemaining;
 
-  final formattedDeadline = DateFormat.MMMd().format(deadline);
+  final unitStr = (unit != null && unit.isNotEmpty) ? ' $unit' : '';
+
   return DailyTargetResult(
     dailyTarget: perDay,
-    label: '${perDay.toStringAsFixed(1)} / day until $formattedDeadline',
+    label: '${perDay.toStringAsFixed(1)}$unitStr/day · $daysRemaining days left',
   );
 }
 

@@ -19,7 +19,7 @@ class TaskService {
   Future<String> createTask({
     required String creatorId,
     required String title,
-    required GoalType goalType,
+    String? unit,
     required double totalGoalValue,
     required DateTime deadline,
     required TaskPriority priority,
@@ -29,13 +29,12 @@ class TaskService {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) throw ArgumentError('Task title cannot be empty.');
     if (totalGoalValue <= 0) throw ArgumentError('Goal value must be greater than zero.');
-    if (goalType == GoalType.percent && totalGoalValue > 100) throw ArgumentError('Percent goals cannot exceed 100.');
     if (!deadline.isAfter(DateTime.now())) throw ArgumentError('Deadline must be set in the future.');
 
     final taskId = await _repository.createTask(
       creatorId: creatorId,
       title: trimmedTitle,
-      goalType: goalType,
+      unit: unit,
       totalGoalValue: totalGoalValue,
       currentValue: 0,
       deadline: deadline,
@@ -56,7 +55,7 @@ class TaskService {
   Future<void> updateTask({
     required String taskId,
     required String title,
-    required GoalType goalType,
+    String? unit,
     required double totalGoalValue,
     required double currentValue,
     required DateTime deadline,
@@ -67,13 +66,12 @@ class TaskService {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) throw ArgumentError('Task title cannot be empty.');
     if (totalGoalValue <= 0) throw ArgumentError('Goal value must be greater than zero.');
-    if (goalType == GoalType.percent && totalGoalValue > 100) throw ArgumentError('Percent goals cannot exceed 100.');
     if (!deadline.isAfter(DateTime.now())) throw ArgumentError('Deadline must be set in the future.');
 
     await _repository.updateTask(
       taskId: taskId,
       title: trimmedTitle,
-      goalType: goalType,
+      unit: unit,
       totalGoalValue: totalGoalValue,
       currentValue: currentValue,
       deadline: deadline,
@@ -88,10 +86,6 @@ class TaskService {
   // ---------------------------------------------------------------------------
 
   /// Validates [delta] and logs progress for [task].
-  ///
-  /// Rules:
-  /// - Delta must be non-zero.
-  /// - For percent-type goals the resulting value must stay within [0, 100].
   Future<void> logProgress({
     required Task task,
     required String userId,
@@ -99,14 +93,6 @@ class TaskService {
   }) async {
     if (delta == 0) {
       throw ArgumentError('Progress delta cannot be zero.');
-    }
-    if (task.goalType == GoalType.percent) {
-      final newValue = task.currentValue + delta;
-      if (newValue < 0 || newValue > 100) {
-        throw ArgumentError(
-          'Progress for a percent goal must stay between 0 and 100.',
-        );
-      }
     }
 
     await _repository.logProgress(

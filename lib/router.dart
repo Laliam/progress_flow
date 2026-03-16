@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'features/auth/application/auth_provider.dart';
 import 'features/auth/presentation/welcome_screen.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'features/profile/presentation/profile_screen.dart';
 import 'features/tasks/domain/task.dart';
 import 'features/tasks/presentation/task_creation_screen.dart';
 import 'features/tasks/presentation/task_detail_screen.dart';
@@ -52,6 +53,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'dashboard',
         pageBuilder: (context, state) => const NoTransitionPage(
           child: DashboardScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: ProfileScreen(),
         ),
       ),
       GoRoute(

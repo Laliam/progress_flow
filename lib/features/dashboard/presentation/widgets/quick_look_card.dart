@@ -24,11 +24,11 @@ class _QuickLookCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withValues(alpha: 0.12),
-              Colors.white.withValues(alpha: 0.02),
+              const Color(0xFF353848),
+              const Color(0xFF181B2C),
             ],
           ),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          border: Border.all(color: const Color(0xFF3C4055)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,7 +45,7 @@ class _QuickLookCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
-                      color: Colors.white.withValues(alpha: 0.12),
+                      color: const Color(0xFF353848),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -73,7 +73,7 @@ class _QuickLookCard extends StatelessWidget {
               padding: EdgeInsets.zero,
               barRadius: const Radius.circular(999),
               percent: completion,
-              backgroundColor: Colors.white.withValues(alpha: 0.08),
+              backgroundColor: const Color(0xFF2F3242),
               progressColor: theme.colorScheme.primary,
             ),
             const SizedBox(height: 8),
@@ -83,14 +83,14 @@ class _QuickLookCard extends StatelessWidget {
                 Text(
                   '${(completion * 100).round()}% complete',
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: const Color(0xFFD0D3E4),
                   ),
                 ),
                 if (task.deadline != null)
                   Text(
                     'Due ${MaterialLocalizations.of(context).formatMediumDate(task.deadline!)}',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: const Color(0xFFB8BBCC),
                     ),
                   ),
               ],

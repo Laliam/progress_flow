@@ -120,7 +120,7 @@ class _JoinGoalScreenState extends ConsumerState<JoinGoalScreen> {
                     Text(
                       'Enter an invite code below, or browse public challenges anyone can join.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.65),
+                        color: const Color(0xFFB8BBCC),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -202,7 +202,7 @@ class _JoinGoalScreenState extends ConsumerState<JoinGoalScreen> {
                   children: [
                     Expanded(
                       child: Divider(
-                        color: Colors.white.withValues(alpha: 0.12),
+                        color: const Color(0xFF2A2D40),
                       ),
                     ),
                     Padding(
@@ -216,7 +216,7 @@ class _JoinGoalScreenState extends ConsumerState<JoinGoalScreen> {
                     ),
                     Expanded(
                       child: Divider(
-                        color: Colors.white.withValues(alpha: 0.12),
+                        color: const Color(0xFF2A2D40),
                       ),
                     ),
                   ],
@@ -235,9 +235,9 @@ class _JoinGoalScreenState extends ConsumerState<JoinGoalScreen> {
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: Colors.white.withValues(alpha: 0.03),
+                        color: const Color(0xFF1A1D2B),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.06),
+                          color: const Color(0xFF2A2D40),
                         ),
                       ),
                       child: Column(
@@ -245,7 +245,7 @@ class _JoinGoalScreenState extends ConsumerState<JoinGoalScreen> {
                           Icon(Icons.public_off_rounded,
                               size: 36,
                               color:
-                                  Colors.white.withValues(alpha: 0.25)),
+                                  const Color(0xFF6B7080)),
                           const SizedBox(height: 10),
                           Text(
                             'No public challenges yet',
@@ -257,7 +257,7 @@ class _JoinGoalScreenState extends ConsumerState<JoinGoalScreen> {
                           Text(
                             'Create a group goal and toggle it public so others can join.',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.35),
+                              color: const Color(0xFF6B7080),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -313,7 +313,7 @@ class _PublicChallengeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final goalLabel =
-        '${task.totalGoalValue.toStringAsFixed(0)} ${task.goalType == GoalType.percent ? '%' : 'units'}';
+        '${task.totalGoalValue.toStringAsFixed(0)}${task.unit != null && task.unit!.isNotEmpty ? ' ${task.unit}' : ' units'}';
     final deadlineLabel = task.deadline == null
         ? 'No deadline'
         : daysLeft == null
@@ -328,8 +328,8 @@ class _PublicChallengeCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withValues(alpha: 0.04),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: const Color(0xFF1C1F2E),
+        border: Border.all(color: const Color(0xFF2A2D40)),
       ),
       child: Row(
         children: [
@@ -364,7 +364,7 @@ class _PublicChallengeCard extends StatelessWidget {
                     Text(
                       goalLabel,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.55),
+                        color: const Color(0xFF8B8FA8),
                       ),
                     ),
                     if (deadlineLabel.isNotEmpty) ...[
@@ -379,7 +379,7 @@ class _PublicChallengeCard extends StatelessWidget {
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: daysLeft != null && daysLeft! <= 3
                               ? theme.colorScheme.tertiary
-                              : Colors.white.withValues(alpha: 0.55),
+                              : const Color(0xFF8B8FA8),
                         ),
                       ),
                     ],

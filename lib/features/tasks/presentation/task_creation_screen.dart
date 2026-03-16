@@ -22,8 +22,8 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
   final _titleController = TextEditingController();
   final _totalGoalController = TextEditingController();
   final _currentValueController = TextEditingController(text: '0');
+  final _unitController = TextEditingController();
   DateTime? _deadline;
-  GoalType _goalType = GoalType.numerical;
   TaskPriority _priority = TaskPriority.medium;
   bool _isGroupTask = false;
   bool _isPublic = false;
@@ -34,13 +34,14 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
   @override
   void initState() {
     super.initState();
+    _unitController.addListener(() => setState(() {}));
     if (widget.taskToEdit != null) {
       final task = widget.taskToEdit!;
       _titleController.text = task.title;
       _totalGoalController.text = task.totalGoalValue.toString();
       _currentValueController.text = task.currentValue.toString();
+      _unitController.text = task.unit ?? '';
       _deadline = task.deadline;
-      _goalType = task.goalType;
       _priority = task.priority;
       _isGroupTask = task.isGroupTask;
       _isPublic = task.isPublic;
@@ -53,6 +54,7 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
     _titleController.dispose();
     _totalGoalController.dispose();
     _currentValueController.dispose();
+    _unitController.dispose();
     super.dispose();
   }
 
@@ -64,6 +66,7 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
         totalGoal: total,
         currentProgress: current,
         deadline: _deadline,
+        unit: _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
       );
     });
   }
@@ -78,7 +81,6 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
       helpText: 'Select deadline',
     );
     if (selected != null) {
-      // Use end of selected day so "today" passes the future-deadline validation.
       setState(() => _deadline = DateTime(
             selected.year,
             selected.month,
@@ -113,12 +115,13 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
 
       final totalGoal = double.parse(_totalGoalController.text);
       final currentValue = double.tryParse(_currentValueController.text) ?? 0;
+      final unit = _unitController.text.trim().isEmpty ? null : _unitController.text.trim();
 
       if (widget.taskToEdit != null) {
         await service.updateTask(
           taskId: widget.taskToEdit!.id,
           title: _titleController.text.trim(),
-          goalType: _goalType,
+          unit: unit,
           totalGoalValue: totalGoal,
           currentValue: currentValue,
           deadline: _deadline!,
@@ -130,12 +133,12 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
         HapticFeedback.heavyImpact();
         if (!mounted) return;
         ref.invalidate(taskByIdProvider(widget.taskToEdit!.id));
-        context.pop(); // Go back to detail screen
+        context.pop();
       } else {
         final taskId = await service.createTask(
           creatorId: userId,
           title: _titleController.text.trim(),
-          goalType: _goalType,
+          unit: unit,
           totalGoalValue: totalGoal,
           deadline: _deadline!,
           priority: _priority,
@@ -145,8 +148,6 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
 
         HapticFeedback.heavyImpact();
         if (!mounted) return;
-        // Pop the creation modal back to dashboard, then push the detail
-        // screen so the back button in task detail returns to dashboard.
         context.pop();
         context.push('/task/$taskId');
       }
@@ -201,57 +202,46 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<GoalType>(
-                        initialValue: _goalType,
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _unitController,
+                        textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
-                          labelText: 'Goal type',
+                          labelText: 'Unit (optional)',
+                          hintText: 'km, pages, reps…',
                         ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: GoalType.numerical,
-                            child: Text('Numerical'),
-                          ),
-                          DropdownMenuItem(
-                            value: GoalType.percent,
-                            child: Text('Percent'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _goalType = value);
-                          _recalculatePreview();
-                        },
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: DropdownButtonFormField<TaskPriority>(
                         initialValue: _priority,
-                        decoration: const InputDecoration(
-                          labelText: 'Priority',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Priority'),
                         items: const [
-                          DropdownMenuItem(
-                            value: TaskPriority.low,
-                            child: Text('Low'),
-                          ),
-                          DropdownMenuItem(
-                            value: TaskPriority.medium,
-                            child: Text('Medium'),
-                          ),
-                          DropdownMenuItem(
-                            value: TaskPriority.high,
-                            child: Text('High'),
-                          ),
+                          DropdownMenuItem(value: TaskPriority.low, child: Text('Low')),
+                          DropdownMenuItem(value: TaskPriority.medium, child: Text('Medium')),
+                          DropdownMenuItem(value: TaskPriority.high, child: Text('High')),
                         ],
                         onChanged: (value) {
                           if (value == null) return;
                           setState(() => _priority = value);
-                          _recalculatePreview();
                         },
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: ['km', 'miles', 'pages', 'reps', 'minutes', 'hours', 'calories', 'sessions']
+                      .map((u) => ActionChip(
+                            label: Text(u),
+                            onPressed: () => setState(() => _unitController.text = u),
+                            backgroundColor: _unitController.text == u
+                                ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                                : null,
+                          ))
+                      .toList(),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -263,18 +253,14 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
                   decoration: InputDecoration(
-                    labelText: _goalType == GoalType.numerical
-                        ? 'Total amount'
-                        : 'Target percent (0-100)',
-                    hintText: _goalType == GoalType.numerical ? '1000' : '100',
+                    labelText: 'Target amount',
+                    hintText: '1000',
+                    suffixText: _unitController.text.isNotEmpty ? _unitController.text : null,
                   ),
                   validator: (value) {
                     final v = double.tryParse(value ?? '');
                     if (v == null || v <= 0) {
                       return 'Enter a positive number';
-                    }
-                    if (_goalType == GoalType.percent && (v <= 0 || v > 100)) {
-                      return 'Percent must be between 0 and 100';
                     }
                     return null;
                   },
@@ -359,8 +345,8 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      color: Colors.white.withValues(alpha: 0.04),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                      color: const Color(0xFF1C1F2E),
+                      border: Border.all(color: const Color(0xFF2A2D40)),
                     ),
                     child: Row(
                       children: [
@@ -387,7 +373,7 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
                               Text(
                                 _dailyTarget!.label,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.7),
+                                  color: const Color(0xFFB8BBCC),
                                 ),
                               ),
                             ],
