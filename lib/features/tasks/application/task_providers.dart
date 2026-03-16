@@ -10,9 +10,9 @@ export '../data/repositories/supabase_task_repository.dart'
     show taskRepositoryProvider;
 export '../../auth/application/auth_provider.dart' show currentUserIdProvider;
 
-final tasksForCurrentUserProvider = StreamProvider.autoDispose<List<Task>>((
-  ref,
-) {
+// Keep alive so the stream stays connected while navigating between screens.
+// This means the dashboard always has fresh data when the user navigates back.
+final tasksForCurrentUserProvider = StreamProvider<List<Task>>((ref) {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) {
     return const Stream.empty();
@@ -21,11 +21,13 @@ final tasksForCurrentUserProvider = StreamProvider.autoDispose<List<Task>>((
   return ref.watch(taskRepositoryProvider).watchTasksForUser();
 });
 
-final taskByIdProvider = FutureProvider.family.autoDispose<Task, String>((
+// Stream so the detail screen receives live updates (e.g. another user logs
+// progress). autoDispose is fine here — we only need live data while on screen.
+final taskByIdProvider = StreamProvider.family.autoDispose<Task, String>((
   ref,
   taskId,
 ) {
-  return ref.watch(taskRepositoryProvider).getTaskById(taskId);
+  return ref.watch(taskRepositoryProvider).watchTaskById(taskId);
 });
 
 final taskProgressLogsProvider = StreamProvider.family

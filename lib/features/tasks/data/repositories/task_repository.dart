@@ -10,6 +10,9 @@ abstract interface class TaskRepository {
   /// Returns a stream of public group tasks that the given user has NOT joined.
   Stream<List<Task>> watchPublicGroupTasksExcluding(String userId);
 
+  /// Returns a real-time stream of a single task by ID.
+  Stream<Task> watchTaskById(String taskId);
+
   Future<Task> getTaskById(String taskId);
 
   Future<String> createTask({

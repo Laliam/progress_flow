@@ -48,6 +48,18 @@ class SupabaseTaskRepository implements TaskRepository {
   }
 
   @override
+  Stream<Task> watchTaskById(String taskId) {
+    return _client
+        .from('tasks')
+        .stream(primaryKey: ['id'])
+        .eq('id', taskId)
+        .map((rows) {
+          if (rows.isEmpty) throw Exception('Task not found');
+          return TaskDto.fromMap(rows.first).toDomain();
+        });
+  }
+
+  @override
   Future<Task> getTaskById(String taskId) async {
     final row = await _client
         .from('tasks')

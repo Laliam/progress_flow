@@ -40,7 +40,7 @@ class _ProgressQuickActionsState extends ConsumerState<ProgressQuickActions> {
       await ref
           .read(progressServiceProvider)
           .logProgress(task: widget.task, userId: userId, delta: delta);
-      ref.invalidate(taskByIdProvider(widget.task.id));
+      // Stream providers auto-update via Supabase Realtime — no manual invalidate needed.
 
       HapticFeedback.mediumImpact();
       if (mounted) {

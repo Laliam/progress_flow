@@ -132,7 +132,7 @@ class _TaskCreationScreenState extends ConsumerState<TaskCreationScreen> {
 
         HapticFeedback.heavyImpact();
         if (!mounted) return;
-        ref.invalidate(taskByIdProvider(widget.taskToEdit!.id));
+        // Stream provider auto-updates via Supabase Realtime — no manual invalidate needed.
         context.pop();
       } else {
         final taskId = await service.createTask(
