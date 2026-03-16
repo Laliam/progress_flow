@@ -88,71 +88,77 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1C1F2E),
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) {
+        final maxH = MediaQuery.of(context).size.height * 0.65;
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxH),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Choose your avatar',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          )),
-                  const SizedBox(height: 16),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                    ),
-                    itemCount: _kAvatarSeeds.length,
-                    itemBuilder: (_, i) {
-                      final seed = _kAvatarSeeds[i];
-                      final selected = seed == _selectedSeed;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() => _selectedSeed = seed);
-                          setSheetState(() {});
-                          Navigator.pop(ctx);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: selected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.white12,
-                              width: selected ? 3 : 1.5,
-                            ),
-                            boxShadow: selected
-                                ? [BoxShadow(
-                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                                    blurRadius: 8,
-                                  )]
-                                : null,
-                          ),
-                          child: ClipOval(child: AvatarPlus(seed, height: 60, width: 60)),
+                    const SizedBox(height: 16),
+                    Text('Choose your avatar',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            )),
+                    const SizedBox(height: 16),
+                    Flexible(
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
                         ),
-                      );
-                    },
-                  ),
-                ],
+                        itemCount: _kAvatarSeeds.length,
+                        itemBuilder: (_, i) {
+                          final seed = _kAvatarSeeds[i];
+                          final selected = seed == _selectedSeed;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedSeed = seed);
+                              setSheetState(() {});
+                              Navigator.pop(ctx);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: selected
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.white12,
+                                  width: selected ? 3 : 1.5,
+                                ),
+                                boxShadow: selected
+                                    ? [BoxShadow(
+                                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                      )]
+                                    : null,
+                              ),
+                              child: ClipOval(child: AvatarPlus(seed, height: 60, width: 60)),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

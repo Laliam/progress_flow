@@ -53,7 +53,13 @@ class SupabaseProfileRepository implements ProfileRepository {
       'updated_at': DateTime.now().toIso8601String(),
     };
     if (avatarSeed != null) payload['avatar_seed'] = avatarSeed;
-    await _client.from('profiles').upsert(payload);
+    try {
+      await _client.from('profiles').upsert(payload);
+    } catch (_) {
+      // avatar_seed column may not exist yet — retry without it
+      payload.remove('avatar_seed');
+      await _client.from('profiles').upsert(payload);
+    }
   }
 }
 

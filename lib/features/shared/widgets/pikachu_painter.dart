@@ -71,22 +71,25 @@ class PikachuPainter extends CustomPainter {
     }
 
     // Ambient floating particles (orbit based on bobValue)
-    _drawParticles(canvas, cx, h * 0.48 + bob, w * 0.46, bobValue);
+    _drawParticles(canvas, cx, h * 0.50 + bob, w * 0.44, bobValue);
 
     // Pokéball drawn FIRST so body overlaps its top edge
-    final pokeY = h * 0.72 + bob * 0.4;
-    final pokeR = w * 0.26;
+    final pokeY = h * 0.76 + bob * 0.4;
+    final pokeR = w * 0.22;
     _drawPokeball(canvas, cx, pokeY, pokeR);
 
     // Squish + lean transform for body group
-    final bodyY = h * 0.40 + bob;
+    final bodyY = h * 0.50 + bob;
     canvas.save();
     canvas.translate(cx, bodyY);
     canvas.scale(scaleX, scaleY);
     if (leanAngle != 0) canvas.rotate(leanAngle);
     canvas.translate(-cx, -bodyY);
 
-    final r = w * 0.28;
+    final r = w * 0.24;
+
+    // Pikachu ears drawn behind body (outside squish transform)
+    _drawEars(canvas, cx, bodyY, r);
 
     // Draw hair spikes → body fill → body outline (fill covers spike bases)
     _drawHair(canvas, cx, bodyY, r);
@@ -97,32 +100,65 @@ class PikachuPainter extends CustomPainter {
     _drawArms(canvas, cx, bodyY, r, exciteValue);
 
     // Face features
-    _drawFace(canvas, cx, bodyY + r * 0.08, r);
+    _drawFace(canvas, cx, bodyY + r * 0.05, r);
 
     canvas.restore();
 
     if (isFlipped) canvas.restore();
   }
 
+  // ── Pikachu ears ──────────────────────────────────────────────────────────
+  void _drawEars(Canvas canvas, double cx, double cy, double r) {
+    // Left ear
+    _drawEar(canvas, cx - r * 0.70, cy - r * 1.10, -0.28, r, false);
+    // Right ear
+    _drawEar(canvas, cx + r * 0.70, cy - r * 1.10, 0.28, r, true);
+  }
+
+  void _drawEar(Canvas canvas, double ex, double ey, double tilt,
+      double r, bool rightSide) {
+    final earW = r * 0.46;
+    final earH = r * 1.05;
+    canvas.save();
+    canvas.translate(ex, ey);
+    canvas.rotate(tilt);
+
+    // Yellow base
+    final earPath = Path()
+      ..moveTo(0, earH / 2)
+      ..lineTo(-earW / 2, -earH * 0.15)
+      ..lineTo(0, -earH / 2)
+      ..lineTo(earW / 2, -earH * 0.15)
+      ..close();
+    canvas.drawPath(earPath, _fill(_kYellow));
+
+    // Black tip (top ~30%)
+    final tipPath = Path()
+      ..moveTo(0, -earH / 2)
+      ..lineTo(-earW * 0.36, -earH * 0.12)
+      ..lineTo(earW * 0.36, -earH * 0.12)
+      ..close();
+    canvas.drawPath(tipPath, _fill(const Color(0xFF1A1A2E)));
+
+    // Outline
+    canvas.drawPath(earPath, _stroke(_kOutline, 2.0));
+    canvas.restore();
+  }
+
   // ── Hair / spikes ─────────────────────────────────────────────────────────
   void _drawHair(Canvas canvas, double cx, double cy, double r) {
-    // 5 spikes whose bases are inside the body oval so body fill hides bases.
-    // Only the tips protrude above the top of the oval.
+    // 3 tuft spikes between the ears
     final tips = [
-      Offset(cx - r * 0.55, cy - r * 1.38),
-      Offset(cx - r * 0.23, cy - r * 1.54),
-      Offset(cx + r * 0.05, cy - r * 1.58),
-      Offset(cx + r * 0.30, cy - r * 1.48),
-      Offset(cx + r * 0.58, cy - r * 1.27),
+      Offset(cx - r * 0.28, cy - r * 1.32),
+      Offset(cx + r * 0.02, cy - r * 1.45),
+      Offset(cx + r * 0.30, cy - r * 1.30),
     ];
     final bases = [
-      Offset(cx - r * 0.52, cy - r * 0.62),
-      Offset(cx - r * 0.21, cy - r * 0.70),
-      Offset(cx + r * 0.05, cy - r * 0.72),
-      Offset(cx + r * 0.29, cy - r * 0.68),
-      Offset(cx + r * 0.55, cy - r * 0.58),
+      Offset(cx - r * 0.26, cy - r * 0.68),
+      Offset(cx + r * 0.02, cy - r * 0.72),
+      Offset(cx + r * 0.28, cy - r * 0.66),
     ];
-    final hw = [r * 0.14, r * 0.16, r * 0.17, r * 0.16, r * 0.14];
+    final hw = [r * 0.13, r * 0.15, r * 0.13];
 
     for (int i = 0; i < tips.length; i++) {
       final t = tips[i];

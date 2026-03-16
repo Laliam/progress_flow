@@ -88,7 +88,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   Size _screenSize = Size.zero;
 
   // ── reaction emojis ──────────────────────────────────────────────────────
-  static const _kReactions = ['⚡', '💛', '✨', '🌟', '💫', '❤️', '🎉'];
+  static const _kReactions = ['⚡', '💛', '✨', '🌟', '💫', '💖', '🎉'];
 
   @override
   void initState() {

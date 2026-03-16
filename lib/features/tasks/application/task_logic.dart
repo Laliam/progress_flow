@@ -93,7 +93,7 @@ ScheduleEvaluation evaluateSchedule({
 
   return const ScheduleEvaluation(
     status: ScheduleStatus.onTrack,
-    message: 'Nicely on track 👌',
+    message: 'Nicely on track — keep it up!',
   );
 }
 
