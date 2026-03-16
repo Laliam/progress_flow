@@ -69,8 +69,10 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   Offset _dragOffset = Offset.zero;
 
   // ── animation controllers ─────────────────────────────────────────────────
-  late AnimationController _bobCtrl;   // idle bob (loop)
-  late AnimationController _walkCtrl;  // leg swing (loop)
+  late AnimationController _bobCtrl;     // idle bob (loop)
+  late AnimationController _exciteCtrl;  // squish/bounce on tap or fling (one-shot)
+
+  double _leanAngle = 0.0;
 
   // ── reaction particles ───────────────────────────────────────────────────
   final List<_Particle> _particles = [];
@@ -95,10 +97,10 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat();
-    _walkCtrl = AnimationController(
+    _exciteCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
-    )..repeat();
+      duration: const Duration(milliseconds: 520),
+    );
     _ticker = createTicker(_onTick)..start();
     _scheduleBehavior();
     _scheduleSleep();
@@ -120,7 +122,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   @override
   void dispose() {
     _bobCtrl.dispose();
-    _walkCtrl.dispose();
+    _exciteCtrl.dispose();
     _ticker.dispose();
     _behaviorTimer?.cancel();
     _sleepTimer?.cancel();
@@ -151,8 +153,10 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       } else {
         const speed = 1.6;
         final dir = diff / dist;
+        final newLean = (dir.dx * 0.22).clamp(-0.28, 0.28);
         setState(() {
           _facingRight = dir.dx > 0;
+          _leanAngle = newLean;
           _pos = Offset(
             (_pos.dx + dir.dx * speed).clamp(_kEdgePad, maxX),
             (_pos.dy + dir.dy * speed).clamp(_kEdgePad, maxY),
@@ -163,7 +167,14 @@ class _PikachuAssistantState extends State<PikachuAssistant>
     }
 
     if (_velocity.distance < _kMinVelocity) {
-      if (_velocity != Offset.zero) setState(() => _velocity = Offset.zero);
+      if (_velocity != Offset.zero) {
+        setState(() {
+          _velocity = Offset.zero;
+          _leanAngle = 0.0;
+        });
+        // Landing bounce
+        _exciteCtrl.forward(from: 0);
+      }
       return;
     }
 
@@ -195,6 +206,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       _pos = pos;
       _velocity = vel;
       _facingRight = vel.dx >= 0;
+      _leanAngle = (vel.dx * 0.018).clamp(-0.28, 0.28);
     });
   }
 
@@ -233,6 +245,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       _walkTarget = target;
       _isSleeping = false;
       _velocity = Offset.zero;
+      _leanAngle = 0.0;
     });
     _sleepTimer?.cancel();
   }
@@ -242,6 +255,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   void _onTap() {
     HapticFeedback.mediumImpact();
     setState(() => _isSleeping = false);
+    _exciteCtrl.forward(from: 0);
     _spawnParticles();
     _sleepTimer?.cancel();
     _scheduleSleep();
@@ -354,14 +368,14 @@ class _PikachuAssistantState extends State<PikachuAssistant>
 
                 // Pikachu custom painter
                 AnimatedBuilder(
-                  animation: Listenable.merge([_bobCtrl, _walkCtrl]),
+                  animation: Listenable.merge([_bobCtrl, _exciteCtrl]),
                   builder: (context, _) {
-                    final isWalking = _state == _PikState.walking;
                     return CustomPaint(
                       size: const Size(_kSize, _kSize),
                       painter: PikachuPainter(
                         bobValue: _bobCtrl.value,
-                        walkValue: isWalking ? _walkCtrl.value : 0.0,
+                        exciteValue: _exciteCtrl.value,
+                        leanAngle: _leanAngle,
                         isFlipped: !_facingRight,
                       ),
                     );

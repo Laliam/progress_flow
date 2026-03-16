@@ -11,6 +11,7 @@ import '../../tasks/application/task_service.dart';
 import '../../tasks/domain/task.dart';
 import '../../tasks/application/task_logic.dart';
 import '../../tasks/application/task_providers.dart';
+import '../../profile/application/profile_providers.dart';
 
 part 'widgets/quick_look_card.dart';
 part 'widgets/empty_quick_look_card.dart';
@@ -70,7 +71,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             onPressed: () => context.push('/profile'),
             icon: ClipOval(
               child: AvatarPlus(
-                ref.watch(currentUserIdProvider) ?? 'user',
+                ref.watch(currentProfileProvider).valueOrNull?.avatarSeed ??
+                    ref.watch(currentUserIdProvider) ?? 'user',
                 height: 36,
                 width: 36,
               ),
