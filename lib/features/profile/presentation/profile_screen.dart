@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/application/auth_provider.dart';
+import '../../../app_version.dart';
 import '../application/profile_providers.dart';
 import '../../../services/notification_service.dart';
 
@@ -180,6 +181,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Text('Daily Reminder', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               _NotificationSettings(buddyEmoji: _selectedEmoji),
+              const SizedBox(height: 32),
+              Text(
+                AppVersion.versionString,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.35),
+                ),
+              ),
             ],
           ),
         ),

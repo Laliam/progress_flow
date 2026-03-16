@@ -6,6 +6,7 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../auth/application/auth_service.dart';
+import '../../profile/application/profile_providers.dart';
 import '../../tasks/application/task_service.dart';
 import '../../tasks/domain/task.dart';
 import '../../tasks/application/task_logic.dart';
@@ -58,6 +59,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final tasksAsync = ref.watch(tasksForCurrentUserProvider);
+    final profileAsync = ref.watch(currentProfileProvider);
+    final avatarEmoji =
+        profileAsync.valueOrNull?.avatarEmoji ?? '🦊';
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -67,7 +71,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           IconButton(
             tooltip: 'Profile',
             onPressed: () => context.push('/profile'),
-            icon: const Icon(Icons.person_outline_rounded),
+            icon: Text(avatarEmoji, style: const TextStyle(fontSize: 22)),
           ),
           IconButton(
             tooltip: 'Sign out',

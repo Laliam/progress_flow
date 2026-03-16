@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'app_version.dart';
 import 'config.dart';
+import 'features/shared/widgets/pikachu_assistant.dart';
 import 'router.dart';
 import 'services/notification_service.dart';
 
@@ -12,6 +14,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  await AppVersion.init();
   await NotificationService().init();
 
   // Lock orientation to portrait for a focused progress-tracking experience.
@@ -96,6 +99,8 @@ class ProgressFlowApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: theme,
       routerConfig: router,
+      builder: (context, child) =>
+          PikachuAssistant(child: child ?? const SizedBox()),
     );
   }
 }
