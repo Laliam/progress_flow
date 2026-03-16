@@ -1,9 +1,9 @@
-import 'package:avatar_maker/fluttermoji.dart';
+import 'package:avatar_maker/avatar_maker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 import '../../auth/application/auth_provider.dart';
 import '../../../app_version.dart';
@@ -38,16 +38,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _usernameController.text = profile.username ?? '';
     _sloganController.text = profile.slogan ?? '';
 
-    // Sync avatar_maker options from DB to local SharedPreferences
+    // Sync avatar JSON options from DB into the controller
     if (profile.avatarJsonOptions != null) {
-      SharedPreferences.getInstance().then((pref) async {
-        await pref.setString(
-            'fluttermojiSelectedOptions', profile.avatarJsonOptions!);
-        // Let the Fluttermoji controller reload on next build
-        try {
-          FluttermojiFunctions(); // ensure defaults loaded
-        } catch (_) {}
-      });
+      final controller = context.read<AvatarMakerController>();
+      if (controller is PersistentAvatarMakerController) {
+        PersistentAvatarMakerController.setJsonOptions(
+          profile.avatarJsonOptions!,
+          controller: controller,
+        );
+      }
     }
   }
 
@@ -56,11 +55,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (userId == null) return;
     setState(() => _isSaving = true);
     try {
-      // Read current avatar options from SharedPreferences (autosaved by FluttermojiCustomizer)
+      // Read current avatar JSON options from the controller
       String? avatarJsonOptions;
       try {
-        final pref = await SharedPreferences.getInstance();
-        avatarJsonOptions = pref.getString('fluttermojiSelectedOptions');
+        avatarJsonOptions = await PersistentAvatarMakerController.getJsonOptions();
       } catch (_) {}
 
       await ref.read(profileRepositoryProvider).updateProfile(
@@ -142,7 +140,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: SizedBox(
                             width: 100,
                             height: 100,
-                            child: FluttermojiCircleAvatar(
+                            child: AvatarMakerAvatar(
                               radius: 50,
                               backgroundColor: Colors.transparent,
                             ),
@@ -168,11 +166,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ? Padding(
                         key: const ValueKey('customizer'),
                         padding: const EdgeInsets.only(top: 16),
-                        child: FluttermojiCustomizer(
+                        child: AvatarMakerCustomizer(
                           scaffoldHeight:
                               MediaQuery.of(context).size.height * 0.38,
                           autosave: true,
-                          theme: FluttermojiThemeData(
+                          theme: AvatarMakerThemeData(
                             primaryBgColor: const Color(0xFF1C1F2E),
                             secondaryBgColor: const Color(0xFF12141F),
                             iconColor: theme.colorScheme.primary,

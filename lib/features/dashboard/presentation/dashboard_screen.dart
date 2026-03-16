@@ -1,4 +1,4 @@
-import 'package:avatar_maker/fluttermoji.dart';
+import 'package:avatar_maker/avatar_maker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,7 +72,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: SizedBox(
                 width: 36,
                 height: 36,
-                child: FluttermojiCircleAvatar(
+                child: AvatarMakerAvatar(
                   radius: 18,
                   backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
                 ),

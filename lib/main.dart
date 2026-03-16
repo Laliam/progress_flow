@@ -1,3 +1,4 @@
+import 'package:avatar_maker/avatar_maker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -94,13 +95,15 @@ class ProgressFlowApp extends ConsumerWidget {
       ),
     );
 
-    return MaterialApp.router(
-      title: 'ProgressFlow',
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      routerConfig: router,
-      builder: (context, child) =>
-          PikachuAssistant(child: child ?? const SizedBox()),
+    return AvatarMakerControllerProvider(
+      child: MaterialApp.router(
+        title: 'ProgressFlow',
+        debugShowCheckedModeBanner: false,
+        theme: theme,
+        routerConfig: router,
+        builder: (context, child) =>
+            PikachuAssistant(child: child ?? const SizedBox()),
+      ),
     );
   }
 }
