@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../application/auth_service.dart';
+import '../application/auth_provider.dart';
+import '../../profile/data/profile_repository.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -29,6 +31,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
       if (!mounted) return;
       HapticFeedback.mediumImpact();
+
+      // Check if first-time user (no username set)
+      final userId = ref.read(currentUserIdProvider);
+      if (userId != null) {
+        final profile = await ref
+            .read(profileRepositoryProvider)
+            .fetchProfile(userId);
+        if (!mounted) return;
+        if (profile == null || profile.username.isEmpty) {
+          context.go('/profile', extra: {'setup': true});
+          return;
+        }
+      }
       context.go('/dashboard');
     } catch (e) {
       if (!mounted) return;
@@ -213,6 +228,31 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                         _isSigningIn
                             ? 'Signing you in...'
                             : 'Continue with Google',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        side: const BorderSide(color: Color(0xFF3C4055)),
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => context.push('/auth/email'),
+                      icon: const Icon(Icons.email_outlined, size: 20),
+                      label: Text(
+                        'Continue with Email',
                         style: theme.textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),

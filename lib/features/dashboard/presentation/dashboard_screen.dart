@@ -90,7 +90,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         icon: const Icon(Icons.add_rounded),
         label: const Text('New goal'),
       ),
-      body: SafeArea(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(tasksForCurrentUserProvider);
+          await Future.delayed(const Duration(milliseconds: 600));
+        },
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: Column(
@@ -286,9 +291,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   radius: 24,
                                   lineWidth: 5,
                                   percent: task.completionPercent,
-                                  backgroundColor: Colors.white.withValues(
-                                    alpha: 0.08,
-                                  ),
+                                  backgroundColor: const Color(0xFF2A2D40),
                                   progressColor: switch (schedule.status) {
                                     ScheduleStatus.completed =>
                                       theme.colorScheme.secondary,
@@ -323,9 +326,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                         overflow: TextOverflow.ellipsis,
                                         style: theme.textTheme.bodySmall
                                             ?.copyWith(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.7,
-                                              ),
+                                              color: const Color(0xFFB8BBCC),
                                             ),
                                       ),
                                     ],
@@ -352,6 +353,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

@@ -13,7 +13,8 @@ const _kAvatarEmojis = [
 ];
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key});
+  final bool isSetup;
+  const ProfileScreen({super.key, this.isSetup = false});
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -55,9 +56,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ref.invalidate(currentProfileProvider);
       HapticFeedback.heavyImpact();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile saved!')),
-        );
+        if (widget.isSetup) {
+          context.go('/dashboard');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile saved!')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -79,11 +84,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/dashboard'),
-        ),
-        title: const Text('My Profile'),
+        leading: widget.isSetup
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back_ios_rounded),
+                onPressed: () =>
+                    context.canPop() ? context.pop() : context.go('/dashboard'),
+              ),
+        title: Text(widget.isSetup ? 'Set Up Your Profile' : 'My Profile'),
+        actions: widget.isSetup
+            ? [
+                TextButton(
+                  onPressed: () => context.go('/dashboard'),
+                  child: const Text('Skip'),
+                ),
+              ]
+            : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -153,7 +169,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _isSaving ? null : _save,
-                  child: Text(_isSaving ? 'Saving…' : 'Save Profile'),
+                  child: Text(_isSaving
+                      ? 'Saving…'
+                      : widget.isSetup
+                          ? 'Continue →'
+                          : 'Save Profile'),
                 ),
               ),
               const SizedBox(height: 28),

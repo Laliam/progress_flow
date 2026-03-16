@@ -27,6 +27,22 @@ class AuthService {
     return _repository.signInWithGoogle();
   }
 
+  /// Signs up a new user with email and password.
+  Future<void> signUpWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return _repository.signUpWithEmail(email: email, password: password);
+  }
+
+  /// Signs in an existing user with email and password.
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return _repository.signInWithEmail(email: email, password: password);
+  }
+
   /// Signs the current user out and clears the local session.
   Future<void> signOut() async {
     return _repository.signOut();

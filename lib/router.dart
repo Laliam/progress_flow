@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'features/auth/application/auth_provider.dart';
 import 'features/auth/presentation/welcome_screen.dart';
+import 'features/auth/presentation/email_auth_screen.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 import 'features/tasks/domain/task.dart';
@@ -58,8 +59,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         name: 'profile',
+        pageBuilder: (context, state) {
+          final isSetup = (state.extra as Map?)?['setup'] == true;
+          return MaterialPage(child: ProfileScreen(isSetup: isSetup));
+        },
+      ),
+      GoRoute(
+        path: '/auth/email',
+        name: 'email_auth',
         pageBuilder: (context, state) => const MaterialPage(
-          child: ProfileScreen(),
+          fullscreenDialog: true,
+          child: EmailAuthScreen(),
         ),
       ),
       GoRoute(

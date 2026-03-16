@@ -366,7 +366,9 @@ class _StatCard extends StatelessWidget {
 
 // ── Progress line chart ────────────────────────────────────────────────────
 
-class _ProgressChart extends ConsumerWidget {
+enum _ChartType { line, bar, pie }
+
+class _ProgressChart extends ConsumerStatefulWidget {
   final Task task;
   final Color progressColor;
   final ThemeData theme;
@@ -377,22 +379,24 @@ class _ProgressChart extends ConsumerWidget {
     required this.theme,
   });
 
-  /// Builds cumulative FlSpots from a list of logs.
-  /// [userId] = null → aggregate all participants.
-  List<FlSpot> _spots(
-    List<dynamic> logs,
-    String? userId,
-    DateTime origin,
-  ) {
+  @override
+  ConsumerState<_ProgressChart> createState() => _ProgressChartState();
+}
+
+class _ProgressChartState extends ConsumerState<_ProgressChart> {
+  _ChartType _chartType = _ChartType.line;
+
+  Task get task => widget.task;
+  Color get progressColor => widget.progressColor;
+  ThemeData get theme => widget.theme;
+
+  List<FlSpot> _spots(List<dynamic> logs, String? userId, DateTime origin) {
     final filtered = userId == null
         ? logs
         : logs.where((l) => l.userId == userId).toList();
-
     if (filtered.isEmpty) return [];
-
     final sorted = [...filtered]
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-
     double cumulative = 0;
     final spots = <FlSpot>[FlSpot(0, 0)];
     for (final log in sorted) {
@@ -401,38 +405,338 @@ class _ProgressChart extends ConsumerWidget {
           .clamp(0, task.totalGoalValue)
           .toDouble();
       final x =
-          log.createdAt.difference(origin).inMinutes / 1440.0; // days as float
+          log.createdAt.difference(origin).inMinutes / 1440.0;
       spots.add(FlSpot(x.clamp(0, double.infinity), cumulative));
     }
     return spots;
   }
 
+  Widget _buildLineChart(List<dynamic> logs) {
+    final sorted = [...logs]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final origin = sorted.first.createdAt.subtract(const Duration(hours: 1));
+    final aggregateSpots = _spots(logs, null, origin);
+    final myUserId = ref.read(currentUserIdProvider);
+    final uniqueUsers = logs.map((l) => l.userId).toSet();
+    final showMyLine =
+        task.isGroupTask && uniqueUsers.length > 1 && myUserId != null;
+    final mySpots =
+        showMyLine ? _spots(logs, myUserId, origin) : <FlSpot>[];
+    final maxY = task.totalGoalValue * 1.05;
+    final totalDays = aggregateSpots.isEmpty
+        ? 1.0
+        : aggregateSpots.last.x.clamp(1.0, double.infinity);
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 150,
+          child: LineChart(
+            LineChartData(
+              minY: 0,
+              maxY: maxY,
+              minX: 0,
+              maxX: totalDays,
+              clipData: const FlClipData.all(),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: task.totalGoalValue / 4,
+                getDrawingHorizontalLine: (v) => FlLine(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  strokeWidth: 1,
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 38,
+                    interval: task.totalGoalValue / 4,
+                    getTitlesWidget: (v, meta) {
+                      if (v == meta.max) return const SizedBox.shrink();
+                      return Text(
+                        v >= 1000
+                            ? '${(v / 1000).toStringAsFixed(1)}k'
+                            : v.toStringAsFixed(0),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: const Color(0xFF6B7080),
+                          fontSize: 10,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 20,
+                    interval: (totalDays / 3)
+                        .ceilToDouble()
+                        .clamp(1, double.infinity),
+                    getTitlesWidget: (v, meta) {
+                      final date = origin.add(
+                          Duration(minutes: (v * 1440).round()));
+                      return Text(
+                        DateFormat.MMMd().format(date),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: const Color(0xFF6B7080),
+                          fontSize: 10,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: aggregateSpots,
+                  isCurved: true,
+                  curveSmoothness: 0.3,
+                  color: progressColor,
+                  barWidth: 2.5,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: progressColor.withValues(alpha: 0.10),
+                  ),
+                ),
+                if (showMyLine && mySpots.length > 1)
+                  LineChartBarData(
+                    spots: mySpots,
+                    isCurved: true,
+                    curveSmoothness: 0.3,
+                    color: theme.colorScheme.tertiary,
+                    barWidth: 1.8,
+                    dashArray: [5, 4],
+                    dotData: const FlDotData(show: false),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (task.isGroupTask) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _LegendDot(color: progressColor, label: 'Group total'),
+              const SizedBox(width: 14),
+              _LegendDot(
+                color: theme.colorScheme.tertiary,
+                label: 'My progress',
+                dashed: true,
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBarChart(List<dynamic> logs) {
+    final sorted = [...logs]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    final recent = sorted.length > 10
+        ? sorted.sublist(sorted.length - 10)
+        : sorted;
+    final barGroups = recent.asMap().entries.map((e) {
+      return BarChartGroupData(
+        x: e.key,
+        barRods: [
+          BarChartRodData(
+            toY: (e.value.valueAdded as num)
+                .toDouble()
+                .clamp(0, task.totalGoalValue),
+            color: progressColor,
+            width: 12,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+      );
+    }).toList();
+
+    return SizedBox(
+      height: 160,
+      child: BarChart(
+        BarChartData(
+          barGroups: barGroups,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval:
+                (task.totalGoalValue / 4).clamp(1, double.infinity),
+            getDrawingHorizontalLine: (v) => FlLine(
+              color: Colors.white.withValues(alpha: 0.05),
+              strokeWidth: 1,
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 20,
+                getTitlesWidget: (v, meta) {
+                  final idx = v.toInt();
+                  if (idx < 0 || idx >= recent.length) {
+                    return const SizedBox.shrink();
+                  }
+                  return Text(
+                    DateFormat.MMMd().format(recent[idx].createdAt),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: const Color(0xFF6B7080),
+                      fontSize: 9,
+                    ),
+                  );
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 36,
+                getTitlesWidget: (v, meta) {
+                  if (v == meta.max) return const SizedBox.shrink();
+                  return Text(
+                    v >= 1000
+                        ? '${(v / 1000).toStringAsFixed(1)}k'
+                        : v.toStringAsFixed(0),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: const Color(0xFF6B7080),
+                      fontSize: 10,
+                    ),
+                  );
+                },
+              ),
+            ),
+            topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPieChart(List<dynamic> logs) {
+    final done = logs.fold<double>(
+        0, (sum, l) => sum + (l.valueAdded as num).toDouble());
+    final completed = done.clamp(0, task.totalGoalValue).toDouble();
+    final remaining =
+        (task.totalGoalValue - completed).clamp(0, double.infinity);
+    final pct = task.totalGoalValue > 0
+        ? (completed / task.totalGoalValue * 100).toStringAsFixed(1)
+        : '0';
+
+    return SizedBox(
+      height: 160,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PieChart(
+            PieChartData(
+              startDegreeOffset: -90,
+              sectionsSpace: 3,
+              centerSpaceRadius: 50,
+              sections: [
+                PieChartSectionData(
+                  value: completed,
+                  color: progressColor,
+                  radius: 24,
+                  showTitle: false,
+                ),
+                PieChartSectionData(
+                value: remaining > 0 ? remaining.toDouble() : 0.001,
+                  color: const Color(0xFF2F3242),
+                  radius: 24,
+                  showTitle: false,
+                ),
+              ],
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$pct%',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: progressColor,
+                ),
+              ),
+              Text(
+                'done',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFF6B7080),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final logsAsync = ref.watch(taskProgressLogsProvider(task.id));
-    final myUserId = ref.watch(currentUserIdProvider);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         color: const Color(0xFF1C1F2E),
-        border:
-            Border.all(color: const Color(0xFF2F3242)),
+        border: Border.all(color: const Color(0xFF2F3242)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.show_chart_rounded,
-                  size: 16, color: progressColor),
+              Icon(Icons.show_chart_rounded, size: 16, color: progressColor),
               const SizedBox(width: 6),
               Text(
-                'Progress over time',
+                'Progress chart',
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFFD8DBE8),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF13151F),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.all(2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ChartTypeBtn(
+                      icon: Icons.show_chart_rounded,
+                      selected: _chartType == _ChartType.line,
+                      onTap: () =>
+                          setState(() => _chartType = _ChartType.line),
+                    ),
+                    _ChartTypeBtn(
+                      icon: Icons.bar_chart_rounded,
+                      selected: _chartType == _ChartType.bar,
+                      onTap: () =>
+                          setState(() => _chartType = _ChartType.bar),
+                    ),
+                    _ChartTypeBtn(
+                      icon: Icons.donut_large_rounded,
+                      selected: _chartType == _ChartType.pie,
+                      onTap: () =>
+                          setState(() => _chartType = _ChartType.pie),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -441,7 +745,8 @@ class _ProgressChart extends ConsumerWidget {
           logsAsync.when(
             loading: () => const SizedBox(
               height: 120,
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              child: Center(
+                  child: CircularProgressIndicator(strokeWidth: 2)),
             ),
             error: (e, _) => SizedBox(
               height: 80,
@@ -464,143 +769,42 @@ class _ProgressChart extends ConsumerWidget {
                   ),
                 );
               }
-
-              final sorted = [...logs]
-                ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-              final origin = sorted.first.createdAt
-                  .subtract(const Duration(hours: 1));
-
-              final aggregateSpots =
-                  _spots(logs, null, origin);
-              // Show individual line only for group tasks where there is
-              // more than one unique contributor.
-              final uniqueUsers =
-                  logs.map((l) => l.userId).toSet();
-              final showMyLine = task.isGroupTask &&
-                  uniqueUsers.length > 1 &&
-                  myUserId != null;
-              final mySpots = showMyLine
-                  ? _spots(logs, myUserId, origin)
-                  : <FlSpot>[];
-
-              final maxY = (task.totalGoalValue * 1.05);
-              final totalDays = aggregateSpots.isEmpty
-                  ? 1.0
-                  : aggregateSpots.last.x.clamp(1.0, double.infinity);
-
-              return SizedBox(
-                height: 150,
-                child: LineChart(
-                  LineChartData(
-                    minY: 0,
-                    maxY: maxY,
-                    minX: 0,
-                    maxX: totalDays,
-                    clipData: const FlClipData.all(),
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      horizontalInterval: task.totalGoalValue / 4,
-                      getDrawingHorizontalLine: (v) => FlLine(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        strokeWidth: 1,
-                      ),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 38,
-                          interval: task.totalGoalValue / 4,
-                          getTitlesWidget: (v, meta) {
-                            if (v == meta.max) {
-                              return const SizedBox.shrink();
-                            }
-                            return Text(
-                              v >= 1000
-                                  ? '${(v / 1000).toStringAsFixed(1)}k'
-                                  : v.toStringAsFixed(0),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: const Color(0xFF6B7080),
-                                fontSize: 10,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 20,
-                          interval: (totalDays / 3).ceilToDouble().clamp(1, double.infinity),
-                          getTitlesWidget: (v, meta) {
-                            final date = origin.add(
-                              Duration(minutes: (v * 1440).round()),
-                            );
-                            return Text(
-                              DateFormat.MMMd().format(date),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: const Color(0xFF6B7080),
-                                fontSize: 10,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                    ),
-                    lineBarsData: [
-                      // Aggregate / total line
-                      LineChartBarData(
-                        spots: aggregateSpots,
-                        isCurved: true,
-                        curveSmoothness: 0.3,
-                        color: progressColor,
-                        barWidth: 2.5,
-                        dotData: const FlDotData(show: false),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          color: progressColor.withValues(alpha: 0.10),
-                        ),
-                      ),
-                      // My individual line (group tasks only)
-                      if (showMyLine && mySpots.length > 1)
-                        LineChartBarData(
-                          spots: mySpots,
-                          isCurved: true,
-                          curveSmoothness: 0.3,
-                          color: theme.colorScheme.tertiary,
-                          barWidth: 1.8,
-                          dashArray: [5, 4],
-                          dotData: const FlDotData(show: false),
-                        ),
-                    ],
-                  ),
-                ),
-              );
+              return switch (_chartType) {
+                _ChartType.line => _buildLineChart(logs),
+                _ChartType.bar => _buildBarChart(logs),
+                _ChartType.pie => _buildPieChart(logs),
+              };
             },
           ),
-          if (task.isGroupTask) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _LegendDot(color: progressColor, label: 'Group total'),
-                const SizedBox(width: 14),
-                _LegendDot(
-                  color: theme.colorScheme.tertiary,
-                  label: 'My progress',
-                  dashed: true,
-                ),
-              ],
-            ),
-          ],
         ],
+      ),
+    );
+  }
+}
+
+class _ChartTypeBtn extends StatelessWidget {
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ChartTypeBtn(
+      {required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFF6C63FF).withValues(alpha: 0.25)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon,
+            size: 16,
+            color: selected ? const Color(0xFF6C63FF) : const Color(0xFF6B7080)),
       ),
     );
   }
@@ -628,9 +832,7 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(
             color: dashed ? Colors.transparent : color,
             borderRadius: BorderRadius.circular(2),
-            border: dashed
-                ? Border.all(color: color, width: 1)
-                : null,
+            border: dashed ? Border.all(color: color, width: 1) : null,
           ),
         ),
         const SizedBox(width: 5),
