@@ -1,12 +1,12 @@
-import 'package:avatar_maker/avatar_maker.dart';
+import 'package:avatar_plus/avatar_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../../auth/application/auth_provider.dart';
 import '../../../app_version.dart';
+import '../application/pikachu_pref_provider.dart';
 import '../application/profile_providers.dart';
 import '../../../services/notification_service.dart';
 
@@ -23,7 +23,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _sloganController = TextEditingController();
   bool _isSaving = false;
   bool _loaded = false;
-  bool _showCustomizer = false;
 
   @override
   void dispose() {
@@ -37,20 +36,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _loaded = true;
     _usernameController.text = profile.username ?? '';
     _sloganController.text = profile.slogan ?? '';
-
-    // Sync avatar JSON options from DB into the controller (deferred to after build)
-    if (profile.avatarJsonOptions != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final controller = context.read<AvatarMakerController>();
-        if (controller is PersistentAvatarMakerController) {
-          PersistentAvatarMakerController.setJsonOptions(
-            profile.avatarJsonOptions!,
-            controller: controller,
-          );
-        }
-      });
-    }
   }
 
   Future<void> _save() async {
@@ -58,17 +43,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (userId == null) return;
     setState(() => _isSaving = true);
     try {
-      // Read current avatar JSON options from the controller
-      String? avatarJsonOptions;
-      try {
-        avatarJsonOptions = await PersistentAvatarMakerController.getJsonOptions();
-      } catch (_) {}
-
       await ref.read(profileRepositoryProvider).updateProfile(
             userId: userId,
             username: _usernameController.text.trim(),
             slogan: _sloganController.text.trim(),
-            avatarJsonOptions: avatarJsonOptions,
           );
       ref.invalidate(currentProfileProvider);
       HapticFeedback.heavyImpact();
@@ -128,77 +106,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Center(
                 child: Column(
                   children: [
-                    GestureDetector(
-                      onTap: () => setState(() => _showCustomizer = !_showCustomizer),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                          border: Border.all(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                            width: 2,
-                          ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                          width: 3,
                         ),
-                        child: ClipOval(
-                          child: SizedBox(
-                            width: 100,
-                            height: 100,
-                            child: AvatarMakerAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.transparent,
-                            ),
-                          ),
+                      ),
+                      child: ClipOval(
+                        child: AvatarPlus(
+                          ref.watch(currentUserIdProvider) ?? 'user',
+                          height: 100,
+                          width: 100,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      _showCustomizer ? 'Tap to hide editor' : 'Tap to customize avatar',
+                      'Your unique avatar',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.primary,
                       ),
                     ),
                   ],
                 ),
-              ),
-
-              // ── Fluttermoji customizer ───────────────────────────────────
-              AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: _showCustomizer
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: AvatarMakerCustomizer(
-                          scaffoldHeight:
-                              MediaQuery.of(context).size.height * 0.38,
-                          autosave: true,
-                          theme: AvatarMakerThemeData(
-                            primaryBgColor: const Color(0xFF1C1F2E),
-                            secondaryBgColor: const Color(0xFF12141F),
-                            iconColor: theme.colorScheme.primary,
-                            selectedIconColor: theme.colorScheme.primary,
-                            unselectedIconColor: Colors.white54,
-                            labelTextStyle: theme.textTheme.labelMedium!
-                                .copyWith(color: Colors.white70),
-                            selectedTileDecoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                  color: theme.colorScheme.primary, width: 2),
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.15),
-                            ),
-                            boxDecoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: const Color(0xFF1C1F2E),
-                            ),
-                            scrollPhysics: const BouncingScrollPhysics(),
-                            tilePadding: const EdgeInsets.all(6),
-                            tileMargin: const EdgeInsets.all(4),
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
               ),
 
               const SizedBox(height: 24),
@@ -260,6 +192,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               const _NotificationSettings(),
+
+              const SizedBox(height: 20),
+
+              // ── Pikachu assistant ──────────────────────────────────────
+              Text('App Settings',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  color: const Color(0xFF1C1F2E),
+                  border: Border.all(color: const Color(0xFF2A2D40)),
+                ),
+                child: SwitchListTile(
+                  title: const Text('Pikachu assistant'),
+                  subtitle: const Text('Show floating Pikachu on all screens'),
+                  secondary: const Text('⚡', style: TextStyle(fontSize: 24)),
+                  value: ref.watch(pikachuEnabledProvider),
+                  onChanged: (v) =>
+                      ref.read(pikachuEnabledProvider.notifier).setEnabled(v),
+                ),
+              ),
 
               const SizedBox(height: 32),
 

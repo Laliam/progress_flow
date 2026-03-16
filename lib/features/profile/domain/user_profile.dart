@@ -7,7 +7,6 @@ class UserProfile extends Equatable {
   final String? avatarUrl;
   final String? slogan;
   final String avatarEmoji;
-  final String? avatarJsonOptions;
 
   const UserProfile({
     required this.id,
@@ -16,7 +15,6 @@ class UserProfile extends Equatable {
     this.avatarUrl,
     this.slogan,
     this.avatarEmoji = '🦊',
-    this.avatarJsonOptions,
   });
 
   UserProfile copyWith({
@@ -24,7 +22,6 @@ class UserProfile extends Equatable {
     String? fullName,
     String? slogan,
     String? avatarEmoji,
-    String? avatarJsonOptions,
   }) {
     return UserProfile(
       id: id,
@@ -33,11 +30,10 @@ class UserProfile extends Equatable {
       avatarUrl: avatarUrl,
       slogan: slogan ?? this.slogan,
       avatarEmoji: avatarEmoji ?? this.avatarEmoji,
-      avatarJsonOptions: avatarJsonOptions ?? this.avatarJsonOptions,
     );
   }
 
   @override
   List<Object?> get props =>
-      [id, username, fullName, avatarUrl, slogan, avatarEmoji, avatarJsonOptions];
+      [id, username, fullName, avatarUrl, slogan, avatarEmoji];
 }

@@ -23,12 +23,16 @@ class _QuickLookCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF353848),
-              const Color(0xFF181B2C),
-            ],
+            colors: task.isGroupTask
+                ? [const Color(0xFF2D3060), const Color(0xFF12141F)]
+                : [const Color(0xFF353848), const Color(0xFF181B2C)],
           ),
-          border: Border.all(color: const Color(0xFF3C4055)),
+          border: Border.all(
+            color: task.isGroupTask
+                ? const Color(0xFF5B63D3)
+                : const Color(0xFF3C4055),
+            width: task.isGroupTask ? 1.5 : 1,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,14 +49,23 @@ class _QuickLookCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
-                      color: const Color(0xFF353848),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF5B63D3), Color(0xFF7C3AED)],
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.groups_rounded, size: 14),
+                        const Icon(Icons.groups_rounded,
+                            size: 13, color: Colors.white),
                         const SizedBox(width: 4),
-                        Text('Race Mode', style: theme.textTheme.labelSmall),
+                        Text(
+                          '🏁 Group',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ),
                   ),

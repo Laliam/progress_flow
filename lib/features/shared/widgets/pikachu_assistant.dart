@@ -4,13 +4,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
-import 'package:lottie/lottie.dart';
+
+import 'pikachu_painter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const double _kSize = 72.0;
+const double _kSize = 80.0;
 const double _kEdgePad = 12.0;
 const double _kFriction = 0.96;
 const double _kBounceDamping = 0.52;
@@ -20,7 +21,7 @@ const double _kMinVelocity = 0.4;
 // State
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum _SparkyState { idle, walking, dragged }
+enum _PikState { idle, walking, dragged }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reaction Particle
@@ -28,7 +29,7 @@ enum _SparkyState { idle, walking, dragged }
 
 class _Particle {
   final String emoji;
-  final Offset startOffset; // relative to Sparky center
+  final Offset startOffset;
   final AnimationController ctrl;
 
   _Particle({
@@ -40,7 +41,7 @@ class _Particle {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PikachuAssistant
-// Wraps child in a Stack and floats the animated Sparky character on top.
+// Wraps child in a Stack and floats the animated Pikachu character on top.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class PikachuAssistant extends StatefulWidget {
@@ -60,15 +61,16 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   bool _initialized = false;
 
   // ── state ────────────────────────────────────────────────────────────────
-  _SparkyState _state = _SparkyState.idle;
+  _PikState _state = _PikState.idle;
   Offset? _walkTarget;
   bool _isSleeping = false;
 
   // ── drag ─────────────────────────────────────────────────────────────────
   Offset _dragOffset = Offset.zero;
 
-  // ── Lottie animation controller ──────────────────────────────────────────
-  late AnimationController _lottieCtrl;
+  // ── animation controllers ─────────────────────────────────────────────────
+  late AnimationController _bobCtrl;   // idle bob (loop)
+  late AnimationController _walkCtrl;  // leg swing (loop)
 
   // ── reaction particles ───────────────────────────────────────────────────
   final List<_Particle> _particles = [];
@@ -89,7 +91,14 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   @override
   void initState() {
     super.initState();
-    _lottieCtrl = AnimationController(vsync: this);
+    _bobCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _walkCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    )..repeat();
     _ticker = createTicker(_onTick)..start();
     _scheduleBehavior();
     _scheduleSleep();
@@ -110,7 +119,8 @@ class _PikachuAssistantState extends State<PikachuAssistant>
 
   @override
   void dispose() {
-    _lottieCtrl.dispose();
+    _bobCtrl.dispose();
+    _walkCtrl.dispose();
     _ticker.dispose();
     _behaviorTimer?.cancel();
     _sleepTimer?.cancel();
@@ -120,29 +130,20 @@ class _PikachuAssistantState extends State<PikachuAssistant>
     super.dispose();
   }
 
-  // ── Lottie loaded ─────────────────────────────────────────────────────────
-
-  void _onLottieLoaded(LottieComposition composition) {
-    _lottieCtrl
-      ..duration = composition.duration
-      ..repeat();
-  }
-
   // ── Physics tick ─────────────────────────────────────────────────────────
 
   void _onTick(Duration elapsed) {
-    if (_state == _SparkyState.dragged || _screenSize == Size.zero) return;
+    if (_state == _PikState.dragged || _screenSize == Size.zero) return;
 
     final maxX = _screenSize.width - _kSize - _kEdgePad;
     final maxY = _screenSize.height - _kSize - _kEdgePad;
 
-    // Walking toward target
-    if (_state == _SparkyState.walking && _walkTarget != null) {
+    if (_state == _PikState.walking && _walkTarget != null) {
       final diff = _walkTarget! - _pos;
       final dist = diff.distance;
       if (dist < 3.0) {
         setState(() {
-          _state = _SparkyState.idle;
+          _state = _PikState.idle;
           _walkTarget = null;
           _velocity = Offset.zero;
         });
@@ -161,7 +162,6 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       return;
     }
 
-    // Fling physics
     if (_velocity.distance < _kMinVelocity) {
       if (_velocity != Offset.zero) setState(() => _velocity = Offset.zero);
       return;
@@ -205,7 +205,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
     _behaviorTimer = Timer(
       Duration(seconds: 10 + _rand.nextInt(16)),
       () {
-        if (mounted && _state == _SparkyState.idle) _startWalking();
+        if (mounted && _state == _PikState.idle) _startWalking();
         _scheduleBehavior();
       },
     );
@@ -214,7 +214,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   void _scheduleSleep() {
     _sleepTimer?.cancel();
     _sleepTimer = Timer(const Duration(seconds: 38), () {
-      if (mounted && _state == _SparkyState.idle) {
+      if (mounted && _state == _PikState.idle) {
         setState(() => _isSleeping = true);
       }
     });
@@ -229,7 +229,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       _kEdgePad + _rand.nextDouble() * (maxY * 0.5) + maxY * 0.2,
     );
     setState(() {
-      _state = _SparkyState.walking;
+      _state = _PikState.walking;
       _walkTarget = target;
       _isSleeping = false;
       _velocity = Offset.zero;
@@ -274,7 +274,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   void _onPanStart(DragStartDetails d) {
     HapticFeedback.selectionClick();
     setState(() {
-      _state = _SparkyState.dragged;
+      _state = _PikState.dragged;
       _isSleeping = false;
       _velocity = Offset.zero;
       _dragOffset = d.globalPosition - _pos;
@@ -293,7 +293,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   void _onPanEnd(DragEndDetails d) {
     final fling = d.velocity.pixelsPerSecond / 18.0;
     setState(() {
-      _state = _SparkyState.idle;
+      _state = _PikState.idle;
       _velocity = fling;
     });
     _scheduleBehavior();
@@ -311,7 +311,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       children: [
         widget.child,
 
-        // ── Sparky overlay ─────────────────────────────────────────────────
+        // ── Pikachu overlay ────────────────────────────────────────────────
         Positioned(
           left: _pos.dx,
           top: _pos.dy,
@@ -352,21 +352,20 @@ class _PikachuAssistantState extends State<PikachuAssistant>
                     child: Text('💤', style: TextStyle(fontSize: 14)),
                   ),
 
-                // Lottie Sparky sprite
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.diagonal3Values(
-                      _facingRight ? 1.0 : -1.0, 1.0, 1.0),
-                  child: Lottie.asset(
-                    'assets/lottie/sparky.json',
-                    controller: _lottieCtrl,
-                    onLoaded: _onLottieLoaded,
-                    width: _kSize,
-                    height: _kSize,
-                    fit: BoxFit.contain,
-                    // Squish slightly when dragged
-                    frameRate: FrameRate.max,
-                  ),
+                // Pikachu custom painter
+                AnimatedBuilder(
+                  animation: Listenable.merge([_bobCtrl, _walkCtrl]),
+                  builder: (context, _) {
+                    final isWalking = _state == _PikState.walking;
+                    return CustomPaint(
+                      size: const Size(_kSize, _kSize),
+                      painter: PikachuPainter(
+                        bobValue: _bobCtrl.value,
+                        walkValue: isWalking ? _walkCtrl.value : 0.0,
+                        isFlipped: !_facingRight,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

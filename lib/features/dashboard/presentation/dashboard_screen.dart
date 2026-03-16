@@ -1,4 +1,4 @@
-import 'package:avatar_maker/avatar_maker.dart';
+import 'package:avatar_plus/avatar_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,13 +69,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             tooltip: 'Profile',
             onPressed: () => context.push('/profile'),
             icon: ClipOval(
-              child: SizedBox(
-                width: 36,
+              child: AvatarPlus(
+                ref.watch(currentUserIdProvider) ?? 'user',
                 height: 36,
-                child: AvatarMakerAvatar(
-                  radius: 18,
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                ),
+                width: 36,
               ),
             ),
           ),
