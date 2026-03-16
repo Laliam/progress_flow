@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+import 'emoji_text.dart';
 import 'pikachu_painter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -351,8 +352,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
                         top: p.startOffset.dy * t,
                         child: Opacity(
                           opacity: (1 - t * 1.1).clamp(0.0, 1.0),
-                          child: Text(p.emoji,
-                              style: const TextStyle(fontSize: 20)),
+                          child: Text(p.emoji, style: emojiStyle(fontSize: 20)),
                         ),
                       );
                     },
@@ -360,10 +360,10 @@ class _PikachuAssistantState extends State<PikachuAssistant>
 
                 // Sleep indicator
                 if (_isSleeping)
-                  const Positioned(
+                  Positioned(
                     right: -4,
                     top: -12,
-                    child: Text('💤', style: TextStyle(fontSize: 14)),
+                    child: Text('💤', style: emojiStyle(fontSize: 14)),
                   ),
 
                 // Pikachu custom painter

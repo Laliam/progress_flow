@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'emoji_text.dart';
+
 class Buddy {
   final String emoji;
   final String name;
@@ -96,7 +98,7 @@ class _BuddyWidgetState extends State<BuddyWidget>
       },
       child: Text(
         widget.buddy.emoji,
-        style: TextStyle(fontSize: widget.size, height: 1),
+        style: emojiStyle(fontSize: widget.size, height: 1),
       ),
     );
   }

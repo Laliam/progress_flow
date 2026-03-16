@@ -53,12 +53,22 @@ class SupabaseProfileRepository implements ProfileRepository {
       'updated_at': DateTime.now().toIso8601String(),
     };
     if (avatarSeed != null) payload['avatar_seed'] = avatarSeed;
+
+    // Upsert with explicit conflict target so Supabase uses UPDATE when the
+    // row already exists (avoids needing INSERT policy for repeat saves).
     try {
-      await _client.from('profiles').upsert(payload);
-    } catch (_) {
-      // avatar_seed column may not exist yet — retry without it
-      payload.remove('avatar_seed');
-      await _client.from('profiles').upsert(payload);
+      await _client
+          .from('profiles')
+          .upsert(payload, onConflict: 'id');
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('avatar_seed') || msg.contains('column')) {
+        // Migration 0007 not yet run — retry without avatar_seed column.
+        payload.remove('avatar_seed');
+        await _client.from('profiles').upsert(payload, onConflict: 'id');
+      } else {
+        rethrow;
+      }
     }
   }
 }

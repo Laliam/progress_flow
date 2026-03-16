@@ -9,6 +9,7 @@ import '../../../app_version.dart';
 import '../application/pikachu_pref_provider.dart';
 import '../application/profile_providers.dart';
 import '../../../services/notification_service.dart';
+import '../../shared/widgets/emoji_text.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final bool isSetup;
@@ -323,7 +324,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: SwitchListTile(
                   title: const Text('Pikachu assistant'),
                   subtitle: const Text('Show floating Pikachu on all screens'),
-                  secondary: const Text('⚡', style: TextStyle(fontSize: 24)),
+                  secondary: EmojiText('⚡', fontSize: 24),
                   value: ref.watch(pikachuEnabledProvider),
                   onChanged: (v) =>
                       ref.read(pikachuEnabledProvider.notifier).setEnabled(v),
@@ -416,7 +417,7 @@ class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
                 : 'Tap to enable'),
             value: _enabled,
             onChanged: _toggleEnabled,
-            secondary: const Text('⚡', style: TextStyle(fontSize: 24)),
+            secondary: EmojiText('⚡', fontSize: 24),
           ),
           if (_enabled) ...[
             const Divider(height: 1),
