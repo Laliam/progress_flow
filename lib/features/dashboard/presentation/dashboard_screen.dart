@@ -95,6 +95,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ref.invalidate(tasksForCurrentUserProvider);
           await Future.delayed(const Duration(milliseconds: 600));
         },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
         child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -239,8 +241,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              Expanded(
-                child: tasksAsync.when(
+              tasksAsync.when(
                   data: (tasks) {
                     if (tasks.isEmpty) {
                       return _EmptyAllGoalsWidget(
@@ -260,6 +261,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       );
                     }
                     return ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: sorted.length,
                       separatorBuilder: (i, j) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
@@ -342,6 +345,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     );
                   },
                   loading: () => ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: 5,
                     separatorBuilder: (i, j) => const SizedBox(height: 10),
                     itemBuilder: (context, index) =>
@@ -349,9 +354,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                   error: (error, _) => Center(child: Text('Error: $error')),
                 ),
-              ),
+              const SizedBox(height: 16),
             ],
           ),
+        ),
         ),
       ),
       ),
