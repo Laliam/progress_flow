@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'features/auth/application/auth_provider.dart';
 import 'features/auth/presentation/welcome_screen.dart';
-import 'features/auth/presentation/email_auth_screen.dart';
+import 'features/auth/presentation/sign_in_screen.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
 import 'features/tasks/domain/task.dart';
@@ -31,8 +31,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final isAuthenticated = ref.read(isAuthenticatedProvider);
       final location = state.matchedLocation;
-      if (!isAuthenticated && location != '/welcome') return '/welcome';
-      if (isAuthenticated && location == '/welcome') return '/dashboard';
+      final isAuthRoute = location == '/welcome' ||
+          location.startsWith('/auth/');
+      if (!isAuthenticated && !isAuthRoute) return '/welcome';
+      if (isAuthenticated && isAuthRoute) return '/dashboard';
       if (location == '/') return isAuthenticated ? '/dashboard' : '/welcome';
       return null;
     },
@@ -50,6 +52,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/auth/signin',
+        name: 'sign_in',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: SignInScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/auth/signup',
+        name: 'sign_up',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: SignUpScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/dashboard',
         name: 'dashboard',
         pageBuilder: (context, state) => const NoTransitionPage(
@@ -63,14 +79,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           final isSetup = (state.extra as Map?)?['setup'] == true;
           return MaterialPage(child: ProfileScreen(isSetup: isSetup));
         },
-      ),
-      GoRoute(
-        path: '/auth/email',
-        name: 'email_auth',
-        pageBuilder: (context, state) => const MaterialPage(
-          fullscreenDialog: true,
-          child: EmailAuthScreen(),
-        ),
       ),
       GoRoute(
         path: '/task/new',

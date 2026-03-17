@@ -125,15 +125,23 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       const SizedBox(height: 12),
                       _FeatureRow(),
                       const Spacer(flex: 3),
+                      _PrimaryButton(
+                        label: 'Sign In',
+                        icon: Icons.login_rounded,
+                        onTap: () => context.push('/auth/signin'),
+                      ),
+                      const SizedBox(height: 12),
+                      _SecondaryButton(
+                        label: 'Create Account',
+                        icon: Icons.person_add_outlined,
+                        onTap: () => context.push('/auth/signup'),
+                      ),
+                      const SizedBox(height: 16),
+                      _OrDivider(),
+                      const SizedBox(height: 16),
                       _GoogleButton(
                         isLoading: _isSigningIn,
                         onTap: _signInWithGoogle,
-                      ),
-                      const SizedBox(height: 14),
-                      _OrDivider(),
-                      const SizedBox(height: 14),
-                      _EmailButton(
-                        onTap: () => context.push('/auth/email'),
                       ),
                       const SizedBox(height: 20),
                       Center(
@@ -477,9 +485,63 @@ class _OrDivider extends StatelessWidget {
   }
 }
 
-class _EmailButton extends StatelessWidget {
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
   final VoidCallback onTap;
-  const _EmailButton({required this.onTap});
+  const _PrimaryButton(
+      {required this.label, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: Material(
+        color: const Color(0xFF6366F1),
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.45),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 20, color: Colors.white),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SecondaryButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _SecondaryButton(
+      {required this.label, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -496,20 +558,17 @@ class _EmailButton extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.14),
-              ),
+                  color: Colors.white.withValues(alpha: 0.14)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.mail_outline_rounded,
-                  size: 20,
-                  color: Colors.white.withValues(alpha: 0.85),
-                ),
-                const SizedBox(width: 12),
+                Icon(icon,
+                    size: 20,
+                    color: Colors.white.withValues(alpha: 0.85)),
+                const SizedBox(width: 10),
                 Text(
-                  'Continue with Email',
+                  label,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
