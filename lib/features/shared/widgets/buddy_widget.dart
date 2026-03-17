@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 
-import 'emoji_text.dart';
-
 class Buddy {
-  final String emoji;
+  final IconData icon;
+  final Color color;
   final String name;
   final String cheer;
-  const Buddy({required this.emoji, required this.name, required this.cheer});
+  const Buddy({
+    required this.icon,
+    required this.color,
+    required this.name,
+    required this.cheer,
+  });
 }
 
 const kBuddies = [
-  Buddy(emoji: '🦊', name: 'Foxy', cheer: 'You\'re on fire! Keep going! 🔥'),
-  Buddy(emoji: '🐉', name: 'Drake', cheer: 'Legendary progress! 💪'),
-  Buddy(emoji: '🐨', name: 'Koala', cheer: 'Slow and steady wins the race! 🌿'),
-  Buddy(emoji: '🐸', name: 'Froggy', cheer: 'Leap forward! You\'ve got this! 🍃'),
-  Buddy(emoji: '🦁', name: 'Simba', cheer: 'Roar! You\'re unstoppable! 👑'),
-  Buddy(emoji: '🐼', name: 'Pandy', cheer: 'Balance is key. Great work! 🎋'),
-  Buddy(emoji: '🐬', name: 'Flip', cheer: 'You\'re in the flow! 🌊'),
-  Buddy(emoji: '🦋', name: 'Flutter', cheer: 'Transformation in progress! ✨'),
-  Buddy(emoji: '🐙', name: 'Octo', cheer: 'Multitasking champion! 🏆'),
-  Buddy(emoji: '🌟', name: 'Star', cheer: 'Shining bright today! ⭐'),
+  Buddy(icon: Icons.pets,                   color: Color(0xFFFF8A65), name: 'Foxy',    cheer: "You're on fire! Keep going!"),
+  Buddy(icon: Icons.local_fire_department,  color: Color(0xFFEF5350), name: 'Drake',   cheer: 'Legendary progress!'),
+  Buddy(icon: Icons.spa,                    color: Color(0xFF66BB6A), name: 'Koala',   cheer: 'Slow and steady wins the race!'),
+  Buddy(icon: Icons.eco,                    color: Color(0xFF26A69A), name: 'Froggy',  cheer: "Leap forward! You've got this!"),
+  Buddy(icon: Icons.star,                   color: Color(0xFFFFCA28), name: 'Simba',   cheer: "Roar! You're unstoppable!"),
+  Buddy(icon: Icons.self_improvement,       color: Color(0xFF42A5F5), name: 'Pandy',   cheer: 'Balance is key. Great work!'),
+  Buddy(icon: Icons.waves,                  color: Color(0xFF29B6F6), name: 'Flip',    cheer: "You're in the flow!"),
+  Buddy(icon: Icons.auto_awesome,           color: Color(0xFFAB47BC), name: 'Flutter', cheer: 'Transformation in progress!'),
+  Buddy(icon: Icons.hub,                    color: Color(0xFF26C6DA), name: 'Octo',    cheer: 'Multitasking champion!'),
+  Buddy(icon: Icons.emoji_events,           color: Color(0xFFFFEE58), name: 'Star',    cheer: 'Shining bright today!'),
 ];
 
 class BuddyWidget extends StatefulWidget {
@@ -96,9 +100,10 @@ class _BuddyWidgetState extends State<BuddyWidget>
           ),
         );
       },
-      child: Text(
-        widget.buddy.emoji,
-        style: emojiStyle(fontSize: widget.size, height: 1),
+      child: Icon(
+        widget.buddy.icon,
+        color: widget.buddy.color,
+        size: widget.size,
       ),
     );
   }

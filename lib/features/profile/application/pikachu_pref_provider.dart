@@ -1,27 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _kPikachuKey = 'pikachu_enabled';
+const _kCatKey = 'cat_enabled';
 
-/// Whether the floating Pikachu assistant overlay is visible.
-final pikachuEnabledProvider =
-    StateNotifierProvider<PikachuEnabledNotifier, bool>(
-  (ref) => PikachuEnabledNotifier(),
+/// Whether the floating Cat assistant overlay is visible.
+final catEnabledProvider = StateNotifierProvider<CatEnabledNotifier, bool>(
+  (ref) => CatEnabledNotifier(),
 );
 
-class PikachuEnabledNotifier extends StateNotifier<bool> {
-  PikachuEnabledNotifier() : super(true) {
+class CatEnabledNotifier extends StateNotifier<bool> {
+  CatEnabledNotifier() : super(true) {
     _load();
   }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    state = prefs.getBool(_kPikachuKey) ?? true;
+    // Migrate old key if present
+    final legacy = prefs.getBool('pikachu_enabled');
+    state = legacy ?? prefs.getBool(_kCatKey) ?? true;
   }
 
   Future<void> setEnabled(bool value) async {
     state = value;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kPikachuKey, value);
+    await prefs.setBool(_kCatKey, value);
   }
 }

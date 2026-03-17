@@ -60,7 +60,7 @@ class _QuickLookCard extends StatelessWidget {
                             size: 13, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
-                          '🏁 Group',
+                          'Group',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,

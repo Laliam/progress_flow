@@ -108,7 +108,7 @@ class ProgressFlowApp extends ConsumerWidget {
       ),
     );
 
-    final pikachuEnabled = ref.watch(pikachuEnabledProvider);
+    final catEnabled = ref.watch(catEnabledProvider);
 
     return MaterialApp.router(
       title: 'ProgressFlow',
@@ -117,7 +117,7 @@ class ProgressFlowApp extends ConsumerWidget {
       routerConfig: router,
       builder: (context, child) {
         final body = child ?? const SizedBox();
-        return pikachuEnabled ? PikachuAssistant(child: body) : body;
+        return catEnabled ? CatAssistant(child: body) : body;
       },
     );
   }

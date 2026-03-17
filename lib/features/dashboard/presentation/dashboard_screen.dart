@@ -292,9 +292,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(22),
-                              color: const Color(0xFF1C1F2E),
+                              color: task.isGroupTask
+                                  ? const Color(0xFF1A1D36)
+                                  : const Color(0xFF1C1F2E),
                               border: Border.all(
-                                color: const Color(0xFF2A2D40),
+                                color: task.isGroupTask
+                                    ? const Color(0xFF5B63D3)
+                                    : const Color(0xFF2A2D40),
+                                width: task.isGroupTask ? 1.5 : 1.0,
                               ),
                             ),
                             child: Row(
@@ -322,6 +327,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            task.isGroupTask
+                                                ? Icons.groups_rounded
+                                                : Icons.person_rounded,
+                                            size: 14,
+                                            color: task.isGroupTask
+                                                ? const Color(0xFF7986CB)
+                                                : const Color(0xFF78909C),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            task.isGroupTask
+                                                ? 'Group'
+                                                : 'Personal',
+                                            style: theme.textTheme.labelSmall
+                                                ?.copyWith(
+                                              color: task.isGroupTask
+                                                  ? const Color(0xFF7986CB)
+                                                  : const Color(0xFF78909C),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
                                       Text(
                                         task.title,
                                         maxLines: 1,

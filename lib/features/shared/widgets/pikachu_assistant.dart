@@ -6,7 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 
-import 'emoji_text.dart';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -28,32 +28,38 @@ enum _PikState { idle, walking, dragged }
 // Reaction Particle
 // ─────────────────────────────────────────────────────────────────────────────
 
+class _Reaction {
+  final IconData icon;
+  final Color color;
+  const _Reaction(this.icon, this.color);
+}
+
 class _Particle {
-  final String emoji;
+  final _Reaction reaction;
   final Offset startOffset;
   final AnimationController ctrl;
 
   _Particle({
-    required this.emoji,
+    required this.reaction,
     required this.startOffset,
     required this.ctrl,
   });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PikachuAssistant
+// CatAssistant
 // Wraps child in a Stack and floats the animated character (Lottie) on top.
 // ─────────────────────────────────────────────────────────────────────────────
 
-class PikachuAssistant extends StatefulWidget {
+class CatAssistant extends StatefulWidget {
   final Widget child;
-  const PikachuAssistant({super.key, required this.child});
+  const CatAssistant({super.key, required this.child});
 
   @override
-  State<PikachuAssistant> createState() => _PikachuAssistantState();
+  State<CatAssistant> createState() => _CatAssistantState();
 }
 
-class _PikachuAssistantState extends State<PikachuAssistant>
+class _CatAssistantState extends State<CatAssistant>
     with TickerProviderStateMixin {
   // ── position & physics ───────────────────────────────────────────────────
   Offset _pos = const Offset(30, 500);
@@ -90,8 +96,16 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   final _rand = Random();
   Size _screenSize = Size.zero;
 
-  // ── reaction emojis ──────────────────────────────────────────────────────
-  static const _kReactions = ['⚡', '💛', '✨', '🌟', '💫', '💖', '🎉'];
+  // ── reaction icons ───────────────────────────────────────────────────────
+  static const _kReactions = [
+    _Reaction(Icons.bolt,              Color(0xFFFFCA28)),
+    _Reaction(Icons.favorite,          Color(0xFFF06292)),
+    _Reaction(Icons.auto_awesome,      Color(0xFF4DD0E1)),
+    _Reaction(Icons.star,              Color(0xFFFFEE58)),
+    _Reaction(Icons.local_fire_department, Color(0xFFFF7043)),
+    _Reaction(Icons.celebration,       Color(0xFFBA68C8)),
+    _Reaction(Icons.emoji_events,      Color(0xFFFFB300)),
+  ];
 
   @override
   void initState() {
@@ -294,7 +308,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
         duration: const Duration(milliseconds: 900),
       );
       final particle = _Particle(
-        emoji: _kReactions[_rand.nextInt(_kReactions.length)],
+        reaction: _kReactions[_rand.nextInt(_kReactions.length)],
         startOffset: Offset(
           (_rand.nextDouble() - 0.5) * 70,
           -_rand.nextDouble() * 55 - 10,
@@ -379,7 +393,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
                         top: p.startOffset.dy * t,
                         child: Opacity(
                           opacity: (1 - t * 1.1).clamp(0.0, 1.0),
-                          child: Text(p.emoji, style: emojiStyle(fontSize: 20)),
+                          child: Icon(p.reaction.icon, color: p.reaction.color, size: 20),
                         ),
                       );
                     },
@@ -390,7 +404,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
                   Positioned(
                     right: -4,
                     top: -12,
-                    child: Text('💤', style: emojiStyle(fontSize: 14)),
+                    child: const Icon(Icons.bedtime, color: Color(0xFF90CAF9), size: 14),
                   ),
 
                 // Lottie character with squish/lean transform
@@ -422,7 +436,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
                     );
                   },
                   child: Lottie.asset(
-                    'assets/lottie/cat_box.json',
+                    'assets/lottie/cat.json',
                     controller: _lottieCtrl,
                     onLoaded: _onLottieLoaded,
                     width: _kSize,

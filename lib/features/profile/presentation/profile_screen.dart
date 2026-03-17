@@ -9,7 +9,7 @@ import '../../../app_version.dart';
 import '../application/pikachu_pref_provider.dart';
 import '../application/profile_providers.dart';
 import '../../../services/notification_service.dart';
-import '../../shared/widgets/emoji_text.dart';
+
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final bool isSetup;
@@ -310,7 +310,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Pikachu assistant ──────────────────────────────────────
+              // ── Cat assistant ──────────────────────────────────────
               Text('App Settings',
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
@@ -322,12 +322,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   border: Border.all(color: const Color(0xFF2A2D40)),
                 ),
                 child: SwitchListTile(
-                  title: const Text('Pikachu assistant'),
-                  subtitle: const Text('Show floating Pikachu on all screens'),
-                  secondary: EmojiText('⚡', fontSize: 24),
-                  value: ref.watch(pikachuEnabledProvider),
+                  title: const Text('Cat assistant'),
+                  subtitle: const Text('Show floating cat on all screens'),
+                  secondary: const Icon(Icons.bolt_rounded, size: 24, color: Color(0xFFFFCA28)),
+                  value: ref.watch(catEnabledProvider),
                   onChanged: (v) =>
-                      ref.read(pikachuEnabledProvider.notifier).setEnabled(v),
+                      ref.read(catEnabledProvider.notifier).setEnabled(v),
                 ),
               ),
 
@@ -381,7 +381,7 @@ class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
     await _notifService.scheduleDailyReminder(
       enabled: value,
       time: _time,
-      buddyEmoji: '⚡',
+      
     );
   }
 
@@ -393,7 +393,7 @@ class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
         await _notifService.scheduleDailyReminder(
           enabled: true,
           time: _time,
-          buddyEmoji: '⚡',
+          
         );
       }
     }
@@ -417,7 +417,7 @@ class _NotificationSettingsState extends ConsumerState<_NotificationSettings> {
                 : 'Tap to enable'),
             value: _enabled,
             onChanged: _toggleEnabled,
-            secondary: EmojiText('⚡', fontSize: 24),
+            secondary: const Icon(Icons.bolt_rounded, size: 24, color: Color(0xFFFFCA28)),
           ),
           if (_enabled) ...[
             const Divider(height: 1),

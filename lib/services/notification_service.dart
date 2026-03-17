@@ -46,7 +46,6 @@ class NotificationService {
   Future<void> scheduleDailyReminder({
     required bool enabled,
     required TimeOfDay time,
-    String buddyEmoji = '🦊',
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefEnabled, enabled);
@@ -81,11 +80,11 @@ class NotificationService {
       ),
     );
 
-    final messages = [
-      '$buddyEmoji Time to update your goals! Every step counts 💪',
-      '$buddyEmoji Don\'t forget your progress today! You\'re doing great ✨',
-      '$buddyEmoji Your goals are waiting for you! Let\'s do this 🚀',
-      '$buddyEmoji A little progress is better than none. Log it now! 📝',
+    const messages = [
+      'Time to update your goals! Every step counts.',
+      'Don\'t forget your progress today! You\'re doing great.',
+      'Your goals are waiting for you! Let\'s do this.',
+      'A little progress is better than none. Log it now!',
     ];
     final msg = messages[DateTime.now().millisecond % messages.length];
 
