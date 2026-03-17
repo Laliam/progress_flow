@@ -4,15 +4,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 
 import 'emoji_text.dart';
-import 'pikachu_painter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const double _kSize = 80.0;
+const double _kSize = 96.0;
 const double _kEdgePad = 12.0;
 const double _kFriction = 0.96;
 const double _kBounceDamping = 0.52;
@@ -42,7 +42,7 @@ class _Particle {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PikachuAssistant
-// Wraps child in a Stack and floats the animated Pikachu character on top.
+// Wraps child in a Stack and floats the animated character (Lottie) on top.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class PikachuAssistant extends StatefulWidget {
@@ -70,8 +70,9 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   Offset _dragOffset = Offset.zero;
 
   // ── animation controllers ─────────────────────────────────────────────────
-  late AnimationController _bobCtrl;     // idle bob (loop)
+  late AnimationController _lottieCtrl;  // drives the Lottie animation
   late AnimationController _exciteCtrl;  // squish/bounce on tap or fling (one-shot)
+  Duration? _lottieDuration;             // original animation duration once loaded
 
   double _leanAngle = 0.0;
 
@@ -84,6 +85,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   // ── timers ───────────────────────────────────────────────────────────────
   Timer? _behaviorTimer;
   Timer? _sleepTimer;
+  Timer? _exciteResetTimer;
 
   final _rand = Random();
   Size _screenSize = Size.zero;
@@ -94,10 +96,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
   @override
   void initState() {
     super.initState();
-    _bobCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
+    _lottieCtrl = AnimationController(vsync: this);
     _exciteCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 520),
@@ -122,15 +121,32 @@ class _PikachuAssistantState extends State<PikachuAssistant>
 
   @override
   void dispose() {
-    _bobCtrl.dispose();
+    _lottieCtrl.dispose();
     _exciteCtrl.dispose();
     _ticker.dispose();
     _behaviorTimer?.cancel();
     _sleepTimer?.cancel();
+    _exciteResetTimer?.cancel();
     for (final p in _particles) {
       p.ctrl.dispose();
     }
     super.dispose();
+  }
+
+  // ── Lottie loaded callback ────────────────────────────────────────────────
+
+  void _onLottieLoaded(LottieComposition composition) {
+    _lottieDuration = composition.duration;
+    _lottieCtrl.duration = composition.duration;
+    _lottieCtrl.repeat();
+  }
+
+  void _setLottieSpeed(double multiplier) {
+    final base = _lottieDuration ?? const Duration(milliseconds: 1500);
+    _lottieCtrl.duration = Duration(
+      milliseconds: (base.inMilliseconds / multiplier).round(),
+    );
+    _lottieCtrl.repeat();
   }
 
   // ── Physics tick ─────────────────────────────────────────────────────────
@@ -150,6 +166,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
           _walkTarget = null;
           _velocity = Offset.zero;
         });
+        _setLottieSpeed(1.0);
         _scheduleSleep();
       } else {
         const speed = 1.6;
@@ -229,6 +246,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
     _sleepTimer = Timer(const Duration(seconds: 38), () {
       if (mounted && _state == _PikState.idle) {
         setState(() => _isSleeping = true);
+        _setLottieSpeed(0.4);
       }
     });
   }
@@ -248,6 +266,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       _velocity = Offset.zero;
       _leanAngle = 0.0;
     });
+    _setLottieSpeed(1.6);
     _sleepTimer?.cancel();
   }
 
@@ -258,6 +277,12 @@ class _PikachuAssistantState extends State<PikachuAssistant>
     setState(() => _isSleeping = false);
     _exciteCtrl.forward(from: 0);
     _spawnParticles();
+    // Speed up animation on excite, restore after 1.5s
+    _setLottieSpeed(2.2);
+    _exciteResetTimer?.cancel();
+    _exciteResetTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) _setLottieSpeed(1.0);
+    });
     _sleepTimer?.cancel();
     _scheduleSleep();
   }
@@ -294,6 +319,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       _velocity = Offset.zero;
       _dragOffset = d.globalPosition - _pos;
     });
+    _setLottieSpeed(1.8);
     _behaviorTimer?.cancel();
     _sleepTimer?.cancel();
   }
@@ -311,6 +337,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       _state = _PikState.idle;
       _velocity = fling;
     });
+    _setLottieSpeed(1.0);
     _scheduleBehavior();
     _scheduleSleep();
   }
@@ -326,7 +353,7 @@ class _PikachuAssistantState extends State<PikachuAssistant>
       children: [
         widget.child,
 
-        // ── Pikachu overlay ────────────────────────────────────────────────
+        // ── Floating assistant overlay ─────────────────────────────────────
         Positioned(
           left: _pos.dx,
           top: _pos.dy,
@@ -366,20 +393,43 @@ class _PikachuAssistantState extends State<PikachuAssistant>
                     child: Text('💤', style: emojiStyle(fontSize: 14)),
                   ),
 
-                // Pikachu custom painter
+                // Lottie character with squish/lean transform
                 AnimatedBuilder(
-                  animation: Listenable.merge([_bobCtrl, _exciteCtrl]),
-                  builder: (context, _) {
-                    return CustomPaint(
-                      size: const Size(_kSize, _kSize),
-                      painter: PikachuPainter(
-                        bobValue: _bobCtrl.value,
-                        exciteValue: _exciteCtrl.value,
-                        leanAngle: _leanAngle,
-                        isFlipped: !_facingRight,
+                  animation: _exciteCtrl,
+                  builder: (context, child) {
+                    double sX = 1.0, sY = 1.0;
+                    final ev = _exciteCtrl.value;
+                    if (ev > 0) {
+                      if (ev < 0.35) {
+                        final t = ev / 0.35;
+                        sX = 1 + t * 0.22; sY = 1 - t * 0.18;
+                      } else if (ev < 0.70) {
+                        final t = (ev - 0.35) / 0.35;
+                        sX = 1.22 - t * 0.30; sY = 0.82 + t * 0.36;
+                      } else {
+                        final t = (ev - 0.70) / 0.30;
+                        sX = 0.92 + t * 0.08; sY = 1.18 - t * 0.18;
+                      }
+                    }
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.rotationZ(_leanAngle),
+                      child: Transform.scale(
+                        scaleX: _facingRight ? sX : -sX,
+                        scaleY: sY,
+                        child: child,
                       ),
                     );
                   },
+                  child: Lottie.asset(
+                    'assets/lottie/cat_box.json',
+                    controller: _lottieCtrl,
+                    onLoaded: _onLottieLoaded,
+                    width: _kSize,
+                    height: _kSize,
+                    fit: BoxFit.contain,
+                    frameRate: FrameRate.max,
+                  ),
                 ),
               ],
             ),

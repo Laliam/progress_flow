@@ -29,6 +29,14 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
   return ref.watch(currentSessionProvider) != null;
 });
 
+/// Tracks the current JWT access token. Changes whenever the token is
+/// refreshed — stream providers that depend on this will automatically
+/// restart and re-subscribe with the new token.
+final accessTokenProvider = Provider<String?>((ref) {
+  ref.watch(authStateChangesProvider); // rebuild on every auth event
+  return ref.watch(supabaseClientProvider).auth.currentSession?.accessToken;
+});
+
 final authControllerProvider = Provider<AuthController>((ref) {
   return AuthController(ref);
 });

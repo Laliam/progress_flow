@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_version.dart';
 import 'config.dart';
+import 'features/auth/application/auth_provider.dart';
 import 'features/shared/widgets/pikachu_assistant.dart';
 import 'features/profile/application/pikachu_pref_provider.dart';
 import 'router.dart';
@@ -33,6 +34,18 @@ class ProgressFlowApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+
+    // When the JWT is refreshed, all stream providers that watch
+    // accessTokenProvider will automatically restart with the new token.
+    // We listen here only to log the refresh event.
+    ref.listen(authStateChangesProvider, (_, next) {
+      next.whenData((state) {
+        if (state.event == AuthChangeEvent.tokenRefreshed) {
+          // ignore: avoid_print
+          print('🔑 Token refreshed — realtime streams will resubscribe');
+        }
+      });
+    });
 
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF2563EB), // Electric Blue
