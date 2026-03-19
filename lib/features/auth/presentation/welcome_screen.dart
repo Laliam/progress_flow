@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../application/auth_service.dart';
 import '../application/auth_provider.dart';
 import '../../profile/data/profile_repository.dart';
+import '../../shared/widgets/uptrack_logo.dart';
 
 // ─── Welcome Screen ───────────────────────────────────────────────────────────
 
@@ -118,8 +119,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 24),
-                      _AppBadge(),
+                      const SizedBox(height: 32),
+                      // Logo + wordmark
+                      const UpTrackLogo(
+                          size: 52, showWordmark: true),
                       const Spacer(flex: 2),
                       _HeroText(),
                       const SizedBox(height: 12),
@@ -213,43 +216,6 @@ class _OrbPainter extends CustomPainter {
 }
 
 // ─── Sub-widgets ─────────────────────────────────────────────────────────────
-
-class _AppBadge extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-        color: Colors.white.withValues(alpha: 0.05),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Color(0xFF10B981),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'ProgressFlow',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _HeroText extends StatelessWidget {
   @override

@@ -90,7 +90,7 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       _dailyNotifId,
-      'ProgressFlow Reminder',
+      'UpTrack Reminder',
       msg,
       scheduled,
       details,

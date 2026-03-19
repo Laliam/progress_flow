@@ -64,7 +64,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ProgressFlow'),
+        title: const Text('UpTrack'),
         actions: [
           IconButton(
             tooltip: 'Profile',

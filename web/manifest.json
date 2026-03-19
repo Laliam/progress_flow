@@ -1,6 +1,6 @@
 {
-    "name": "progress_flow",
-    "short_name": "progress_flow",
+    "name": "UpTrack",
+    "short_name": "UpTrack",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

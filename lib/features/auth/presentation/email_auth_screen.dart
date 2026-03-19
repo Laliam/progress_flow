@@ -156,7 +156,7 @@ class _EmailAuthScreenState extends ConsumerState<EmailAuthScreen>
                       _BackButton(),
                       const Spacer(),
                       const Text(
-                        'ProgressFlow',
+                        'UpTrack',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 15,

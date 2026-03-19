@@ -7,7 +7,7 @@ class AppVersion {
   static Future<void> init() async {
     _info = await PackageInfo.fromPlatform();
     // ignore: avoid_print
-    print('🚀 ProgressFlow $versionString launched');
+    print('🚀 UpTrack $versionString launched');
   }
 
   static String get versionString {
@@ -15,5 +15,5 @@ class AppVersion {
     return 'v${_info!.version}+${_info!.buildNumber}';
   }
 
-  static String get appName => _info?.appName ?? 'ProgressFlow';
+  static String get appName => _info?.appName ?? 'UpTrack';
 }

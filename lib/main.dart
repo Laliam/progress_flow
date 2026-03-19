@@ -25,11 +25,11 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(const ProviderScope(child: ProgressFlowApp()));
+  runApp(const ProviderScope(child: UpTrackApp()));
 }
 
-class ProgressFlowApp extends ConsumerWidget {
-  const ProgressFlowApp({super.key});
+class UpTrackApp extends ConsumerWidget {
+  const UpTrackApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -111,7 +111,7 @@ class ProgressFlowApp extends ConsumerWidget {
     final catEnabled = ref.watch(catEnabledProvider);
 
     return MaterialApp.router(
-      title: 'ProgressFlow',
+      title: 'UpTrack',
       debugShowCheckedModeBanner: false,
       theme: theme,
       routerConfig: router,
