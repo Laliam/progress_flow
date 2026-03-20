@@ -58,6 +58,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return list;
   }
 
+  /// Push a route and invalidate tasks when returning (handles stream gaps).
+  Future<void> _pushAndRefresh(BuildContext context, String route) async {
+    await context.push(route);
+    if (mounted) ref.invalidate(tasksForCurrentUserProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tasksAsync = ref.watch(tasksForCurrentUserProvider);
@@ -95,7 +101,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           HapticFeedback.mediumImpact();
-          context.push('/task/new');
+          _pushAndRefresh(context, '/task/new');
         },
         icon: const Icon(Icons.add_rounded),
         label: const Text('New goal'),
@@ -131,7 +137,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       data: (tasks) {
                         if (tasks.isEmpty) {
                           return _EmptyQuickLookCard(
-                              onNewTap: () => context.push('/task/new'));
+                              onNewTap: () => _pushAndRefresh(context, '/task/new'));
                         }
                         tasks.sort((a, b) {
                           int ps(Task t) => switch (t.priority) {
@@ -167,7 +173,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         data: (tasks) {
                           if (tasks.isEmpty) {
                             return _EmptyQuickLookCard(
-                                onNewTap: () => context.push('/task/new'));
+                                onNewTap: () => _pushAndRefresh(context, '/task/new'));
                           }
                           tasks.sort((a, b) {
                             int priorityScore(Task t) => switch (t.priority) {
@@ -229,7 +235,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   TextButton.icon(
                     onPressed: () {
                       HapticFeedback.selectionClick();
-                      context.push('/task/new');
+                      _pushAndRefresh(context, '/task/new');
                     },
                     icon: const Icon(Icons.add_rounded, size: 18),
                     label: const Text('Add'),
@@ -292,7 +298,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       return _EmptyAllGoalsWidget(
                         onNewTap: () {
                           HapticFeedback.mediumImpact();
-                          context.push('/task/new');
+                          _pushAndRefresh(context, '/task/new');
                         },
                       );
                     }
@@ -316,7 +322,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       return GestureDetector(
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          context.push('/task/${task.id}');
+                          _pushAndRefresh(context, '/task/${task.id}');
                         },
                         child: Container(
                           padding: const EdgeInsets.all(14),
@@ -725,7 +731,8 @@ class _JoinChallengeCardState extends ConsumerState<_JoinChallengeCard> {
 
       HapticFeedback.heavyImpact();
       if (!mounted) return;
-      context.push('/task/$taskId');
+      await context.push('/task/$taskId');
+      ref.invalidate(tasksForCurrentUserProvider);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

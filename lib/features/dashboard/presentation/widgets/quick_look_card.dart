@@ -1,19 +1,20 @@
 part of '../dashboard_screen.dart';
 
-class _QuickLookCard extends StatelessWidget {
+class _QuickLookCard extends ConsumerWidget {
   final Task task;
 
   const _QuickLookCard({required this.task});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final completion = task.completionPercent;
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         HapticFeedback.lightImpact();
-        context.push('/task/${task.id}');
+        await context.push('/task/${task.id}');
+        ref.invalidate(tasksForCurrentUserProvider);
       },
       child: Container(
         // Fixed width only in horizontal scroll (phone); expands to fill grid cell on tablet
