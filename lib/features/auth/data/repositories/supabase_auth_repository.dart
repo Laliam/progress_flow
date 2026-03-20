@@ -65,7 +65,11 @@ class SupabaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    await _client.auth.signUp(email: email, password: password);
+    await _client.auth.signUp(
+      email: email,
+      password: password,
+      emailRedirectTo: 'com.uptrack.app://auth/confirm',
+    );
   }
 
   @override

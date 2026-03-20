@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'features/auth/application/auth_provider.dart';
 import 'features/auth/presentation/welcome_screen.dart';
+import 'features/auth/presentation/email_confirmed_screen.dart';
 import 'features/auth/presentation/sign_in_screen.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
 import 'features/profile/presentation/profile_screen.dart';
@@ -63,6 +64,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'sign_up',
         pageBuilder: (context, state) => const MaterialPage(
           child: SignUpScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/auth/confirm',
+        name: 'email_confirmed',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: EmailConfirmedScreen(),
         ),
       ),
       GoRoute(
