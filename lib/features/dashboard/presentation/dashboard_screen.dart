@@ -72,8 +72,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
-        title: const UpTrackWordmark(height: 44),
+        title: RichText(
+          text: const TextSpan(
+            children: [
+              TextSpan(
+                text: 'Up',
+                style: TextStyle(
+                  color: Color(0xFFFF6B2B),
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              TextSpan(
+                text: 'Track',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           IconButton(
             tooltip: 'Profile',
