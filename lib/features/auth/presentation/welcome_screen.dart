@@ -9,6 +9,7 @@ import '../application/auth_service.dart';
 import '../application/auth_provider.dart';
 import '../../profile/data/profile_repository.dart';
 import '../../shared/widgets/uptrack_logo.dart';
+import '../../shared/widgets/responsive_layout.dart';
 
 // ─── Welcome Screen ───────────────────────────────────────────────────────────
 
@@ -114,53 +115,101 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               opacity: _fadeIn,
               child: SlideTransition(
                 position: _slideIn,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 32),
-                      // Logo + wordmark
-                      const UpTrackLogo(
-                          size: 52, showWordmark: true),
-                      const Spacer(flex: 2),
-                      _HeroText(),
-                      const SizedBox(height: 12),
-                      _FeatureRow(),
-                      const Spacer(flex: 3),
-                      _PrimaryButton(
-                        label: 'Sign In',
-                        icon: Icons.login_rounded,
-                        onTap: () => context.push('/auth/signin'),
-                      ),
-                      const SizedBox(height: 12),
-                      _SecondaryButton(
-                        label: 'Create Account',
-                        icon: Icons.person_add_outlined,
-                        onTap: () => context.push('/auth/signup'),
-                      ),
-                      const SizedBox(height: 16),
-                      _OrDivider(),
-                      const SizedBox(height: 16),
-                      _GoogleButton(
-                        isLoading: _isSigningIn,
-                        onTap: _signInWithGoogle,
-                      ),
-                      const SizedBox(height: 20),
-                      Center(
-                        child: Text(
-                          'By continuing, you agree to stay kind to your future self.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.38),
-                            height: 1.5,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isTabletScreen = isTablet(context);
+                    final hPad = isTabletScreen ? 48.0 : 28.0;
+
+                    final ctaColumn = Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _PrimaryButton(
+                          label: 'Sign In',
+                          icon: Icons.login_rounded,
+                          onTap: () => context.push('/auth/signin'),
+                        ),
+                        const SizedBox(height: 12),
+                        _SecondaryButton(
+                          label: 'Create Account',
+                          icon: Icons.person_add_outlined,
+                          onTap: () => context.push('/auth/signup'),
+                        ),
+                        const SizedBox(height: 16),
+                        _OrDivider(),
+                        const SizedBox(height: 16),
+                        _GoogleButton(
+                          isLoading: _isSigningIn,
+                          onTap: _signInWithGoogle,
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: Text(
+                            'By continuing, you agree to stay kind to your future self.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.38),
+                              height: 1.5,
+                            ),
                           ),
                         ),
+                      ],
+                    );
+
+                    if (isTabletScreen) {
+                      // Tablet: two-column layout
+                      return Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: hPad, vertical: 32),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Left: branding + hero
+                            Expanded(
+                              flex: 5,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const UpTrackBrand(iconSize: 48),
+                                  const SizedBox(height: 40),
+                                  _HeroText(),
+                                  const SizedBox(height: 16),
+                                  _FeatureRow(),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 48),
+                            // Right: auth buttons
+                            Expanded(
+                              flex: 4,
+                              child: ctaColumn,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // Phone: single column
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 32),
+                          const UpTrackBrand(iconSize: 40),
+                          const Spacer(flex: 2),
+                          _HeroText(),
+                          const SizedBox(height: 12),
+                          _FeatureRow(),
+                          const Spacer(flex: 3),
+                          ctaColumn,
+                          const SizedBox(height: 28),
+                        ],
                       ),
-                      const SizedBox(height: 28),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

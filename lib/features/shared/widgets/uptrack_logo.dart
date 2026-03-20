@@ -2,96 +2,92 @@ import 'package:flutter/material.dart';
 
 /// UpTrack brand logo.
 ///
-/// Renders the UpTrack image logo with optional wordmark.
-///
-/// ```dart
-/// UpTrackLogo(size: 48)                     // icon only
-/// UpTrackLogo(size: 48, showWordmark: true) // icon + "UpTrack"
-/// ```
+/// - [UpTrackLogo] — square icon mark (uptrack_icon.jpeg), rounded corners
+/// - [UpTrackWordmark] — full horizontal wordmark (uptrack_logo.jpeg)
+/// - [UpTrackBrand] — icon + text inline for nav bars / headers
+/// - [UpTrackHero] — pulsing-glow hero for welcome/splash screens
+
 class UpTrackLogo extends StatelessWidget {
   final double size;
-  final bool showWordmark;
-  final Color? wordmarkColor;
-
-  const UpTrackLogo({
-    super.key,
-    this.size = 48,
-    this.showWordmark = false,
-    this.wordmarkColor,
-  });
+  const UpTrackLogo({super.key, this.size = 48});
 
   @override
   Widget build(BuildContext context) {
-    final logoWidget = ClipRRect(
+    return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.22),
       child: Image.asset(
-        'assets/images/logo.jpeg',
+        'assets/images/uptrack_icon.jpeg',
         width: size,
         height: size,
         fit: BoxFit.cover,
       ),
     );
+  }
+}
 
-    if (!showWordmark) return logoWidget;
+/// Full horizontal wordmark (dark charcoal bg, orange "Up" + white "Track").
+class UpTrackWordmark extends StatelessWidget {
+  final double height;
+  const UpTrackWordmark({super.key, this.height = 40});
 
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/uptrack_logo.jpeg',
+      height: height,
+      width: height * (2560 / 1440),
+      fit: BoxFit.cover,
+    );
+  }
+}
+
+/// Compact inline brand: icon + "UpTrack" text (for headers/nav).
+class UpTrackBrand extends StatelessWidget {
+  final double iconSize;
+  const UpTrackBrand({super.key, this.iconSize = 36});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        logoWidget,
-        SizedBox(width: size * 0.18),
-        _UpTrackWordmark(size: size, color: wordmarkColor),
+        UpTrackLogo(size: iconSize),
+        SizedBox(width: iconSize * 0.20),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Up',
+                style: TextStyle(
+                  fontSize: iconSize * 0.56,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFFFF6B2B),
+                  letterSpacing: -0.5,
+                  height: 1,
+                ),
+              ),
+              TextSpan(
+                text: 'Track',
+                style: TextStyle(
+                  fontSize: iconSize * 0.56,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
-// ─── Wordmark ─────────────────────────────────────────────────────────────────
-
-class _UpTrackWordmark extends StatelessWidget {
-  final double size;
-  final Color? color;
-
-  const _UpTrackWordmark({required this.size, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final fontSize = size * 0.56;
-    final baseColor = color ?? const Color(0xFFFF6B2B);
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: 'Up',
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w800,
-              color: baseColor,
-              letterSpacing: -0.5,
-              height: 1,
-            ),
-          ),
-          TextSpan(
-            text: 'Track',
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.5,
-              height: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Full-screen splash / hero logo for onboarding.
-/// Shows the icon mark with animated pulse glow, plus the wordmark below.
+/// Full-screen hero for onboarding — pulsing orange glow + wordmark below.
 class UpTrackHero extends StatefulWidget {
   final double iconSize;
-
   const UpTrackHero({super.key, this.iconSize = 80});
 
   @override
@@ -145,18 +141,9 @@ class _UpTrackHeroState extends State<UpTrackHero>
           ),
           child: Center(child: UpTrackLogo(size: s)),
         ),
-        SizedBox(height: s * 0.22),
-        _UpTrackWordmark(size: s * 0.70),
+        SizedBox(height: s * 0.28),
+        UpTrackWordmark(height: s * 0.55),
       ],
     );
   }
 }
-
-
-/// UpTrack brand logo.
-///
-/// Renders as an icon mark + optional wordmark.
-///
-/// ```dart
-/// UpTrackLogo(size: 48)                     // icon only
-/// UpTrackLogo(size: 48, showWordmark: true) // icon + "UpTrack"

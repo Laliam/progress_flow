@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../application/auth_service.dart';
 import '../application/auth_provider.dart';
 import '../../profile/data/profile_repository.dart';
+import '../../shared/widgets/responsive_layout.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -98,7 +99,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: const Color(0xFF070B14),
       body: Stack(
         children: [
@@ -155,7 +156,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 28),
+                        padding: EdgeInsets.symmetric(horizontal: isTablet(context) ? 56 : 28),
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -306,6 +307,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         ],
       ),
     );
+    return AuthPageWrapper(child: scaffold);
   }
 }
 
@@ -393,7 +395,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: const Color(0xFF070B14),
       body: Stack(
         children: [
@@ -449,7 +451,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
 
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 28),
+                        padding: EdgeInsets.symmetric(horizontal: isTablet(context) ? 56 : 28),
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -631,6 +633,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
         ],
       ),
     );
+    return AuthPageWrapper(child: scaffold);
   }
 }
 

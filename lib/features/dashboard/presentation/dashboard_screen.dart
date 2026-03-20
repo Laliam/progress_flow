@@ -12,6 +12,7 @@ import '../../tasks/domain/task.dart';
 import '../../tasks/application/task_logic.dart';
 import '../../tasks/application/task_providers.dart';
 import '../../profile/application/profile_providers.dart';
+import '../../shared/widgets/responsive_layout.dart';
 
 part 'widgets/quick_look_card.dart';
 part 'widgets/empty_quick_look_card.dart';
@@ -107,8 +108,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
         child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: MaxWidthBox(
+          padding: EdgeInsets.fromLTRB(
+            isTablet(context) ? 32 : 16,
+            8,
+            isTablet(context) ? 32 : 16,
+            0,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -119,37 +125,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 190,
-                child: tasksAsync.when(
-                  data: (tasks) {
-                    if (tasks.isEmpty) {
-                      return _EmptyQuickLookCard(
-                        onNewTap: () {
-                          context.push('/task/new');
-                        },
-                      );
-                    }
-
-                    tasks.sort((a, b) {
-                      int priorityScore(Task t) {
-                        return switch (t.priority) {
-                          TaskPriority.high => 0,
-                          TaskPriority.medium => 1,
-                          TaskPriority.low => 2,
-                        };
-                      }
-
-                      final pri = priorityScore(a).compareTo(priorityScore(b));
-                      if (pri != 0) return pri;
-                      final aDeadline =
-                          a.deadline ??
-                          DateTime.now().add(const Duration(days: 365));
-                      final bDeadline =
-                          b.deadline ??
-                          DateTime.now().add(const Duration(days: 365));
-                      return aDeadline.compareTo(bDeadline);
-                    });
+              // Quick-look: horizontal scroll on phone, 2-col grid on tablet
+              isTablet(context)
+                  ? tasksAsync.when(
+                      data: (tasks) {
+                        if (tasks.isEmpty) {
+                          return _EmptyQuickLookCard(
+                              onNewTap: () => context.push('/task/new'));
+                        }
+                        tasks.sort((a, b) {
+                          int ps(Task t) => switch (t.priority) {
+                                TaskPriority.high => 0,
+                                TaskPriority.medium => 1,
+                                TaskPriority.low => 2,
+                              };
+                          final pri = ps(a).compareTo(ps(b));
+                          if (pri != 0) return pri;
+                          return (a.deadline ?? DateTime(9999))
+                              .compareTo(b.deadline ?? DateTime(9999));
+                        });
+                        return ResponsiveGrid(
+                          phoneColumns: 1,
+                          tabletColumns: 2,
+                          spacing: 14,
+                          runSpacing: 14,
+                          children: tasks
+                              .take(6)
+                              .map((t) => Hero(
+                                    tag: 'task-card-${t.id}',
+                                    child: _QuickLookCard(task: t),
+                                  ))
+                              .toList(),
+                        );
+                      },
+                      loading: () => const CircularProgressIndicator(),
+                      error: (e, _) => Text('$e'),
+                    )
+                  : SizedBox(
+                      height: 190,
+                      child: tasksAsync.when(
+                        data: (tasks) {
+                          if (tasks.isEmpty) {
+                            return _EmptyQuickLookCard(
+                                onNewTap: () => context.push('/task/new'));
+                          }
+                          tasks.sort((a, b) {
+                            int priorityScore(Task t) => switch (t.priority) {
+                                  TaskPriority.high => 0,
+                                  TaskPriority.medium => 1,
+                                  TaskPriority.low => 2,
+                                };
+                            final pri =
+                                priorityScore(a).compareTo(priorityScore(b));
+                            if (pri != 0) return pri;
+                            final aDeadline = a.deadline ??
+                                DateTime.now()
+                                    .add(const Duration(days: 365));
+                            final bDeadline = b.deadline ??
+                                DateTime.now()
+                                    .add(const Duration(days: 365));
+                            return aDeadline.compareTo(bDeadline);
+                          });
 
                     return ListView.separated(
                       scrollDirection: Axis.horizontal,
@@ -174,7 +210,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   error: (error, _) =>
                       Center(child: Text('Could not load tasks: $error')),
                 ),
-              ),
+              ), // SizedBox (phone quick-look)
               const SizedBox(height: 14),
 
               // ── Join a Group Challenge ──────────────────────────────
@@ -269,119 +305,132 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                       );
                     }
+
+                    // Build the individual goal card widget
+                    Widget goalCard(Task task) {
+                      final schedule = evaluateSchedule(
+                        task: task,
+                        startDate: task.deadline
+                            ?.subtract(const Duration(days: 30)),
+                      );
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          context.push('/task/${task.id}');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            color: task.isGroupTask
+                                ? const Color(0xFF1A1D36)
+                                : const Color(0xFF1C1F2E),
+                            border: Border.all(
+                              color: task.isGroupTask
+                                  ? const Color(0xFF5B63D3)
+                                  : const Color(0xFF2A2D40),
+                              width: task.isGroupTask ? 1.5 : 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              CircularPercentIndicator(
+                                radius: 24,
+                                lineWidth: 5,
+                                percent: task.completionPercent,
+                                backgroundColor: const Color(0xFF2A2D40),
+                                progressColor: switch (schedule.status) {
+                                  ScheduleStatus.completed =>
+                                    theme.colorScheme.secondary,
+                                  ScheduleStatus.behind =>
+                                    theme.colorScheme.tertiary,
+                                  _ => theme.colorScheme.primary,
+                                },
+                                center: Text(
+                                  '${(task.completionPercent * 100).round()}%',
+                                  style: theme.textTheme.labelMedium,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          task.isGroupTask
+                                              ? Icons.groups_rounded
+                                              : Icons.person_rounded,
+                                          size: 14,
+                                          color: task.isGroupTask
+                                              ? const Color(0xFF7986CB)
+                                              : const Color(0xFF78909C),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          task.isGroupTask
+                                              ? 'Group'
+                                              : 'Personal',
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                            color: task.isGroupTask
+                                                ? const Color(0xFF7986CB)
+                                                : const Color(0xFF78909C),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      task.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      schedule.message,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                        color: const Color(0xFFB8BBCC),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _PriorityBadge(priority: task.priority),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (isTablet(context)) {
+                      return ResponsiveGrid(
+                        phoneColumns: 1,
+                        tabletColumns: 2,
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: sorted.map(goalCard).toList(),
+                      );
+                    }
+
                     return ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: sorted.length,
                       separatorBuilder: (i, j) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
-                        final task = sorted[index];
-                        final schedule = evaluateSchedule(
-                          task: task,
-                          startDate: task.deadline?.subtract(
-                            const Duration(days: 30),
-                          ),
-                        );
-
-                        return GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            context.push('/task/${task.id}');
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
-                              color: task.isGroupTask
-                                  ? const Color(0xFF1A1D36)
-                                  : const Color(0xFF1C1F2E),
-                              border: Border.all(
-                                color: task.isGroupTask
-                                    ? const Color(0xFF5B63D3)
-                                    : const Color(0xFF2A2D40),
-                                width: task.isGroupTask ? 1.5 : 1.0,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                CircularPercentIndicator(
-                                  radius: 24,
-                                  lineWidth: 5,
-                                  percent: task.completionPercent,
-                                  backgroundColor: const Color(0xFF2A2D40),
-                                  progressColor: switch (schedule.status) {
-                                    ScheduleStatus.completed =>
-                                      theme.colorScheme.secondary,
-                                    ScheduleStatus.behind =>
-                                      theme.colorScheme.tertiary,
-                                    _ => theme.colorScheme.primary,
-                                  },
-                                  center: Text(
-                                    '${(task.completionPercent * 100).round()}%',
-                                    style: theme.textTheme.labelMedium,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            task.isGroupTask
-                                                ? Icons.groups_rounded
-                                                : Icons.person_rounded,
-                                            size: 14,
-                                            color: task.isGroupTask
-                                                ? const Color(0xFF7986CB)
-                                                : const Color(0xFF78909C),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            task.isGroupTask
-                                                ? 'Group'
-                                                : 'Personal',
-                                            style: theme.textTheme.labelSmall
-                                                ?.copyWith(
-                                              color: task.isGroupTask
-                                                  ? const Color(0xFF7986CB)
-                                                  : const Color(0xFF78909C),
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        task.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.bodyLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        schedule.message,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: const Color(0xFFB8BBCC),
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                _PriorityBadge(priority: task.priority),
-                              ],
-                            ),
-                          ),
-                        );
+                        return goalCard(sorted[index]);
                       },
                     );
                   },
