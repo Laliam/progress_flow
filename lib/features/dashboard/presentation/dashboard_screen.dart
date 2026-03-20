@@ -72,7 +72,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const UpTrackWordmark(height: 28),
+        toolbarHeight: 64,
+        title: const UpTrackWordmark(height: 44),
         actions: [
           IconButton(
             tooltip: 'Profile',
