@@ -9,7 +9,7 @@ class _EmptyQuickLookCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      width: 260,
+      width: isTablet(context) ? double.infinity : 260,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -17,6 +17,7 @@ class _EmptyQuickLookCard extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
@@ -33,12 +34,12 @@ class _EmptyQuickLookCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your first goal and we’ll start tracking your flow.',
+            "Create your first goal and we'll start tracking your flow.",
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
           FilledButton.tonal(
             onPressed: onNewTap,
             child: const Text('Start a goal'),
