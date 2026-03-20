@@ -150,31 +150,26 @@ class AuthPageWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!isTablet(context)) return child;
 
-    // Tablet: show background + centered card
+    // Tablet: centered card on solid background (no duplicate child)
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Stack(
-        children: [
-          child, // background (orbs, etc.) fills full screen
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                  maxWidth: AppBreakpoints.authCardWidth),
-              child: Card(
-                margin: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 48),
-                color: const Color(0xFF0F1220),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28)),
-                elevation: 24,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: child,
-                ),
-              ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+              maxWidth: AppBreakpoints.authCardWidth),
+          child: Card(
+            margin: const EdgeInsets.symmetric(
+                horizontal: 24, vertical: 48),
+            color: const Color(0xFF0F1220),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28)),
+            elevation: 24,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: child,
             ),
           ),
-        ],
+        ),
       ),
     );
   }

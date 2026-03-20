@@ -16,7 +16,8 @@ class _QuickLookCard extends StatelessWidget {
         context.push('/task/${task.id}');
       },
       child: Container(
-        width: 260,
+        // Fixed width only in horizontal scroll (phone); expands to fill grid cell on tablet
+        width: isTablet(context) ? double.infinity : 260,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
@@ -71,7 +72,7 @@ class _QuickLookCard extends StatelessWidget {
                   ),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 12),
             Text(
               task.title,
               maxLines: 2,

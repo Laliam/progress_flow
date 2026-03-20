@@ -162,7 +162,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       error: (e, _) => Text('$e'),
                     )
                   : SizedBox(
-                      height: 190,
+                      height: MediaQuery.sizeOf(context).height * 0.22,
                       child: tasksAsync.when(
                         data: (tasks) {
                           if (tasks.isEmpty) {
