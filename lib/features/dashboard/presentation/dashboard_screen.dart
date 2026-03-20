@@ -13,6 +13,7 @@ import '../../tasks/application/task_logic.dart';
 import '../../tasks/application/task_providers.dart';
 import '../../profile/application/profile_providers.dart';
 import '../../shared/widgets/responsive_layout.dart';
+import '../../shared/widgets/uptrack_logo.dart';
 
 part 'widgets/quick_look_card.dart';
 part 'widgets/empty_quick_look_card.dart';
@@ -71,7 +72,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('UpTrack'),
+        title: const UpTrackLogo(height: 28),
         actions: [
           IconButton(
             tooltip: 'Profile',
