@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Pre-commit Hook for Flutter Expert
+# Install this hook to automatically run analysis before commits
+#
+# Installation:
+#   cp .github/pre-commit-hook .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# To skip the hook for a commit:
+#   git commit --no-verify
+#
+# To disable locally:
+#   chmod -x .git/hooks/pre-commit
+
+set -e
+
+STAGED_DART_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.dart$' || true)
+
+if [ -z "$STAGED_DART_FILES" ]; then
+    echo "✅ No Dart files to check"
+    exit 0
+fi
+
+echo "🔍 Running Flutter Expert pre-commit checks..."
+echo ""
+
+# Run format check
+echo "🎨 Checking code format..."
+if ! dart format --set-exit-if-changed --output=none $STAGED_DART_FILES 2>/dev/null; then
+    echo "❌ Code format issues found!"
+    echo "💡 Run: dart format lib/ test/"
+    exit 1
+fi
+echo "✅ Format check passed"
+
+# Run analysis
+echo "📊 Running static analysis..."
+if ! flutter analyze --no-fatal-infos --suppress-analytics > /dev/null 2>&1; then
+    echo "❌ Analysis found issues!"
+    echo "💡 Run: flutter analyze"
+    exit 1
+fi
+echo "✅ Analysis check passed"
+
+# Run metrics (optional - doesn't fail commit)
+echo "📈 Running code metrics..."
+if command -v dcm &> /dev/null; then
+    if ! dcm analyze lib/ --reporter=console > /dev/null 2>&1; then
+        echo "⚠️  Code metrics found suggestions (non-blocking)"
+    else
+        echo "✅ Metrics check passed"
+    fi
+else
+    echo "ℹ️  dcm not installed - skipping metrics"
+fi
+
+echo ""
+echo "✅ Pre-commit checks passed!"
+echo ""
+exit 0

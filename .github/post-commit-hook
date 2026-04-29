@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Post-commit Hook for Flutter Expert
+# Install this hook to run quick analysis after commits
+#
+# Installation:
+#   cp .github/post-commit-hook .git/hooks/post-commit
+#   chmod +x .git/hooks/post-commit
+#
+# This runs in the background and won't block your workflow
+
+set -e
+
+echo ""
+echo "📊 Running post-commit analysis (background)..."
+echo ""
+
+# Quick metrics check (non-blocking)
+if command -v dcm &> /dev/null; then
+    dcm analyze lib/ --reporter=console 2>&1 | head -10 || true
+    echo "ℹ️  View full report: bash scripts/analyze.sh"
+else
+    echo "ℹ️  Install dcm for detailed metrics: bash scripts/setup-flutter-expert.sh"
+fi
+
+echo ""
+exit 0
