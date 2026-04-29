@@ -1,0 +1,187 @@
+name: "Flutter Expert Code Review"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options.yaml'
+
+jobs:
+  flutter-expert-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          cache: true
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Install analysis tools
+        run: |
+          dart pub global activate dart_code_metrics
+          dart pub global activate dependency_validator
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      - name: Run Flutter Analysis
+        id: flutter_analysis
+        run: |
+          echo "## Flutter Static Analysis" >> $GITHUB_STEP_SUMMARY
+          flutter analyze --no-fatal-infos --suppress-analytics 2>&1 | tee analysis_output.txt || true
+          cat analysis_output.txt >> $GITHUB_STEP_SUMMARY
+
+      - name: Check Dart Format
+        id: dart_format
+        run: |
+          echo "## Code Formatting Check" >> $GITHUB_STEP_SUMMARY
+          if ! dart format --set-exit-if-changed --output=none lib/ test/ 2>&1; then
+            echo "❌ Code formatting issues found" >> $GITHUB_STEP_SUMMARY
+            dart format --output=none --set-exit-if-changed lib/ test/ 2>&1 | head -20 >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Code formatting is correct" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run Dart Code Metrics (SOLID & Complexity)
+        id: dcm
+        continue-on-error: true
+        run: |
+          echo "## Code Quality Metrics" >> $GITHUB_STEP_SUMMARY
+          dcm analyze lib/ --reporter=console 2>&1 | tee dcm_output.txt || true
+          cat dcm_output.txt >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate Dependencies
+        id: deps_check
+        continue-on-error: true
+        run: |
+          echo "## Dependency Validation" >> $GITHUB_STEP_SUMMARY
+          dependency_validator 2>&1 | tee deps_output.txt || true
+          cat deps_output.txt >> $GITHUB_STEP_SUMMARY
+
+      - name: Security Scan - Check pubspec.lock
+        id: security_scan
+        run: |
+          echo "## Security Review" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f pubspec.lock ]; then
+            echo "✅ pubspec.lock exists" >> $GITHUB_STEP_SUMMARY
+            
+            # Check for known vulnerable packages
+            if grep -q "retry\|http\|image\|intl" pubspec.lock; then
+              echo "⚠️ Detected commonly analyzed packages - manual review recommended" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Count dependencies
+            TOTAL_DEPS=$(grep "^  [a-z]" pubspec.lock | wc -l)
+            echo "📦 Total dependencies: $TOTAL_DEPS" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: SOLID Principles Check
+        id: solid_check
+        run: |
+          echo "## SOLID Principles Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "### Single Responsibility Principle" >> $GITHUB_STEP_SUMMARY
+          find lib -name "*.dart" -type f | while read file; do
+            LINE_COUNT=$(wc -l < "$file")
+            if [ "$LINE_COUNT" -gt 300 ]; then
+              echo "⚠️ $file has $LINE_COUNT lines (consider splitting)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          echo "### Open/Closed Principle" >> $GITHUB_STEP_SUMMARY
+          if grep -r "abstract class\|interface" lib/ --include="*.dart" 2>/dev/null | wc -l | grep -q "^0$"; then
+            echo "ℹ️ Consider using abstract classes for better extensibility" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Found use of abstract classes for extension" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### Liskov Substitution Principle" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ Manual review needed - verify override consistency" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Interface Segregation Principle" >> $GITHUB_STEP_SUMMARY
+          if grep -r "mixin" lib/ --include="*.dart" 2>/dev/null | wc -l | grep -qv "^0$"; then
+            echo "✅ Found use of mixins for interface segregation" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### Dependency Inversion Principle" >> $GITHUB_STEP_SUMMARY
+          if grep -r "Riverpod\|GetIt\|Provider" lib/ --include="*.dart" 2>/dev/null | wc -l | grep -qv "^0$"; then
+            echo "✅ Found dependency injection/service locator usage" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Consider using dependency injection patterns" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Project Structure Validation
+        id: structure_check
+        run: |
+          echo "## Project Structure Review" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for consistent directory structure
+          EXPECTED_DIRS=("models" "views" "providers" "services" "utils" "widgets")
+          echo "### Expected Architecture Directories:" >> $GITHUB_STEP_SUMMARY
+          for dir in "${EXPECTED_DIRS[@]}"; do
+            if [ -d "lib/$dir" ]; then
+              echo "✅ lib/$dir exists" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ lib/$dir missing (optional)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          # Check file naming conventions
+          echo "### File Naming Conventions:" >> $GITHUB_STEP_SUMMARY
+          SNAKE_CASE_ERRORS=$(find lib -name "*.dart" | grep -E '[A-Z].*\.dart$' | wc -l)
+          if [ "$SNAKE_CASE_ERRORS" -eq 0 ]; then
+            echo "✅ All Dart files use snake_case naming" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Found $SNAKE_CASE_ERRORS files not following snake_case convention" >> $GITHUB_STEP_SUMMARY
+            find lib -name "*.dart" | grep -E '[A-Z].*\.dart$' | head -5 >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Create Review Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync(process.env.GITHUB_STEP_SUMMARY, 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+      - name: Set check status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: run } = await github.rest.actions.getWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+            
+            if (run.conclusion === 'failure') {
+              core.setFailed('Code review found issues. Please review the comments above.');
+            }

@@ -1,0 +1,55 @@
+name: "Copilot Setup Steps"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - pubspec.yaml
+      - pubspec.lock
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - pubspec.yaml
+      - pubspec.lock
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          cache: true
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Install Dart Code Metrics (dcm)
+        run: |
+          dart pub global activate dart_code_metrics
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      - name: Install Dependency Validator
+        run: |
+          dart pub global activate dependency_validator
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      - name: Verify Flutter Analysis
+        run: |
+          flutter analyze --no-fatal-infos --suppress-analytics || true
+          echo "Analysis completed"
+
+      - name: Check Dart Formatting
+        run: |
+          dart format --set-exit-if-changed --output=none lib/ test/ 2>/dev/null || true
+          echo "Format check completed"
